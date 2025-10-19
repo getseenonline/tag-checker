@@ -8,30 +8,39 @@ import { fileURLToPath } from "url";
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Fix for ES module path resolution
+// Resolve paths safely in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Serve static files (HTML, images, etc.)
+// ✅ Serve static files from "public" folder
 app.use(express.static(path.join(__dirname, "public")));
 
-// ✅ Serve the main HTML file correctly
+// ✅ Root route to serve your main HTML
 app.get("/", (req, res) => {
   const filePath = path.join(__dirname, "public", "tag-checker-v2.html");
-  res.sendFile(filePath); // Must be a string path!
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error("Error sending file:", err);
+      res.status(500).send("Error loading page");
+    }
+  });
 });
 
-// ✅ GHL contacts API endpoint
+// ✅ Endpoint to fetch contacts from GHL
 app.post("/contacts", async (req, res) => {
   try {
     const { apiKey } = req.body;
+    if (!apiKey) {
+      return res.status(400).json({ error: "Missing API key" });
+    }
+
     const response = await fetch("https://rest.gohighlevel.com/v1/contacts/", {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
+
     const data = await response.json();
     res.json({ contacts: data.contacts || [] });
   } catch (error) {
@@ -40,7 +49,7 @@ app.post("/contacts", async (req, res) => {
   }
 });
 
-// ✅ Start server
+// ✅ Start the server
 app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`✅ Server running successfully on port ${PORT}`);
 });
