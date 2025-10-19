@@ -2,34 +2,35 @@
 import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// -------------------
-// 1️⃣  Middleware setup
-// -------------------
+// Fix for ES module path resolution
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public")); // Serves files from the 'public' folder (your HTML, images, etc.)
 
-// -------------------
-// 2️⃣  Default route for main page
-// -------------------
+// Serve static files (HTML, images, etc.)
+app.use(express.static(path.join(__dirname, "public")));
+
+// ✅ Serve the main HTML file correctly
 app.get("/", (req, res) => {
-  // When someone visits https://tag-checker.onrender.com
-  // it will load your Tag Checker HTML file
-  res.sendFile(new URL("./public/tag-checker-v2.html", import.meta.url));
+  const filePath = path.join(__dirname, "public", "tag-checker-v2.html");
+  res.sendFile(filePath); // Must be a string path!
 });
 
-// -------------------
-// 3️⃣  API route to fetch contacts from GHL
-// -------------------
+// ✅ GHL contacts API endpoint
 app.post("/contacts", async (req, res) => {
   try {
     const { apiKey } = req.body;
     const response = await fetch("https://rest.gohighlevel.com/v1/contacts/", {
-      headers: { Authorization: `Bearer ${apiKey}` }
+      headers: { Authorization: `Bearer ${apiKey}` },
     });
     const data = await response.json();
     res.json({ contacts: data.contacts || [] });
@@ -39,9 +40,7 @@ app.post("/contacts", async (req, res) => {
   }
 });
 
-// -------------------
-// 4️⃣  Start the server
-// -------------------
+// ✅ Start server
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
