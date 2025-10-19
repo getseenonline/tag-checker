@@ -6,17 +6,25 @@ import cors from "cors";
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Middleware
+// -------------------
+// 1️⃣  Middleware setup
+// -------------------
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public")); // optional if you have HTML/CSS in a folder
+app.use(express.static("public")); // Serves files from the 'public' folder (your HTML, images, etc.)
 
-// Example route for testing
+// -------------------
+// 2️⃣  Default route for main page
+// -------------------
 app.get("/", (req, res) => {
-  res.send("✅ Server is running successfully!");
+  // When someone visits https://tag-checker.onrender.com
+  // it will load your Tag Checker HTML file
+  res.sendFile(new URL("./public/tag-checker-v2.html", import.meta.url));
 });
 
-// API route to fetch from GHL
+// -------------------
+// 3️⃣  API route to fetch contacts from GHL
+// -------------------
 app.post("/contacts", async (req, res) => {
   try {
     const { apiKey } = req.body;
@@ -31,7 +39,9 @@ app.post("/contacts", async (req, res) => {
   }
 });
 
-// Start server
+// -------------------
+// 4️⃣  Start the server
+// -------------------
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
