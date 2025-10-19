@@ -1,323 +1,399 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Tag Checker</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f7f9fc;
-  margin: 0;
-  color: #0E1A40;
-}
-.topbar {
-  background: linear-gradient(180deg, #0E1A40, #0A1433);
-  color: #fff;
-  padding: 10px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.topbar img {
-  height: 40px;
-  vertical-align: middle;
-}
-.container {
-  display: flex;
-  height: calc(100vh - 60px);
-}
-.left {
-  width: 300px;
-  background: #eef1f7;
-  padding: 15px;
-  overflow-y: auto;
-  border-right: 2px solid #ccc;
-}
-.right {
-  flex: 1;
-  padding: 15px;
-  overflow-y: auto;
-}
-button {
-  background: #0E1A40;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  padding: 6px 12px;
-  margin: 4px 0;
-}
-button:hover {
-  background: #15245A;
-}
-input[type="text"] {
-  width: 100%;
-  padding: 6px;
-  margin-bottom: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-.filter-section {
-  margin-bottom: 20px;
-}
-label {
-  display: block;
-  margin: 4px 0;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-th, td {
-  border: 1px solid #ccc;
-  padding: 8px;
-  text-align: left;
-}
-th {
-  background: #0E1A40;
-  color: white;
-}
-.modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.3);
-  width: 400px;
-  max-height: 80vh;
-  overflow-y: auto;
-  display: none;
-}
-.modal.show { display: block; }
-.modal h3 { margin-top: 0; color: #0E1A40; }
-.slider {
-  width: 100%;
-}
+  :root{
+    --brand-navy:#0E1A40;
+    --brand-orange:#F7941E;
+    --header-bg:#F5F6FA;
+    --panel-bg:#EEF1F7;
+    --border:#D8DFE7;
+  }
+  html,body{height:100%}
+  body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;color:var(--brand-navy);background:#f7f9fc}
+
+  /* Header */
+  .topbar{
+    background:var(--header-bg);
+    color:var(--brand-navy);
+    height:64px;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 18px;border-bottom:1px solid var(--border)
+  }
+  .topbar h1{font-size:22px;margin:0;font-weight:700;letter-spacing:.2px}
+  .brand-link{display:inline-flex;align-items:center;gap:10px;color:inherit;text-decoration:none}
+  .brand-link img{height:36px;display:block}
+
+  /* Layout */
+  .wrap{display:flex;height:calc(100% - 64px);min-height:560px}
+  .left{width:320px;min-width:240px;max-width:540px;background:var(--panel-bg);padding:14px;overflow:auto}
+  .divider{width:6px;cursor:col-resize;background:transparent}
+  .divider:hover{background:#e6eaf1}
+  .right{flex:1;min-width:400px;padding:16px;overflow:auto}
+
+  h3{margin:10px 0 8px 0}
+  .controls h4{margin:14px 0 6px}
+  .muted{opacity:.8}
+
+  input[type="text"]{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:#fff}
+  .btn{background:var(--brand-navy);color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer}
+  .btn:hover{filter:brightness(1.05)}
+  .btn.secondary{background:#ffffff;color:var(--brand-navy);border:1px solid var(--border)}
+  .btn.orange{background:var(--brand-orange);color:#111}
+
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+  .small{font-size:12px}
+  .tag-list{max-height:240px;overflow:auto;border:1px solid var(--border);border-radius:8px;background:#fff;padding:8px}
+  .tag-list label{display:block;padding:4px 2px;cursor:pointer}
+
+  /* Table */
+  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  thead th{position:relative;background:var(--brand-navy);color:#fff;padding:10px 12px;font-weight:600;user-select:none}
+  tbody td{border-top:1px solid var(--border);padding:10px 12px;vertical-align:top}
+  .tag{display:inline-block;margin:2px 6px 2px 0;padding:4px 8px;border-radius:999px;background:#eef2ff;color:#1e2a55;border:1px solid #d7def6;font-size:12px;white-space:nowrap}
+
+  /* Column resizer handle */
+  .col-resizer{
+    position:absolute;top:0;right:0;width:6px;height:100%;cursor:col-resize;user-select:none
+  }
+
+  /* Modal */
+  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(14,26,64,.25);padding:16px}
+  .modal.show{display:flex}
+  .modal-card{background:#fff;border-radius:12px;width:min(560px,90vw);max-height:85vh;overflow:auto;border:1px solid var(--border)}
+  .modal-card header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border)}
+  .modal-card h4{margin:0}
+  .modal-card .content{padding:14px 16px}
+
+  /* Slider */
+  .slider{width:100%}
+
+  /* Grey-out */
+  .disabled-area{opacity:.45;pointer-events:none}
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <h2>Tag Checker</h2>
-  <a href="https://get-seenonline.com" target="_blank">
-    <img src="GSO Logo.png" alt="Get Seen Online Logo" />
+<header class="topbar">
+  <h1>Tag Checker</h1>
+  <a class="brand-link" href="https://get-seenonline.com" target="_blank" rel="noopener">
+    <img src="GSO Logo.png" alt="Get Seen Online" />
   </a>
-</div>
+</header>
 
-<div class="container">
-  <div class="left">
-    <button id="fetchGHL">Fetch from GoHighLevel</button>
-    <button id="topTagsBtn">View Top Tags</button>
-    <div class="filter-section">
+<main class="wrap">
+  <aside class="left">
+    <div class="btn-row">
+      <button id="fetchGHL" class="btn orange">Fetch from GoHighLevel</button>
+      <button id="topTagsBtn" class="btn secondary">View Top Tags</button>
+    </div>
+
+    <div class="controls">
       <h4>Primary Tag Filter</h4>
-      <input type="text" id="primarySearch" placeholder="Search primary tags..." />
-      <div>
-        <label><input type="radio" name="logicMode" value="and" checked> Match primary tags using: AND</label>
+      <input id="primarySearch" type="text" placeholder="Search primary tags…" />
+      <div class="small muted" style="margin:6px 0 8px">
+        <label><input type="radio" name="logicMode" value="and" checked> Match primary tags using: AND</label><br>
         <label><input type="radio" name="logicMode" value="or"> Match primary tags using: OR</label>
       </div>
-      <label><input type="checkbox" id="noTagPrimary"> Include 'No Tags'</label>
-      <div id="primaryTags"></div>
-      <div>
-        <button id="selectAllPrimary">Select All</button>
-        <button id="deselectAllPrimary">Deselect All</button>
-      </div>
-    </div>
 
-    <div class="filter-section">
+      <label style="margin:6px 0 6px"><input type="checkbox" id="noTagPrimary"> Include ‘No Tags’</label>
+      <div class="tag-list" id="primaryTags"></div>
+      <div class="btn-row">
+        <button id="selectAllPrimary" class="btn small">Select All</button>
+        <button id="deselectAllPrimary" class="btn secondary small">Deselect All</button>
+      </div>
+
       <h4>Secondary Tag Filter</h4>
-      <input type="text" id="secondarySearch" placeholder="Search secondary tags..." />
-      <label><input type="checkbox" id="noTagSecondary"> Include 'No Tags'</label>
-      <div id="secondaryTags"></div>
-      <div>
-        <button id="selectAllSecondary">Select All</button>
-        <button id="deselectAllSecondary">Deselect All</button>
+      <input id="secondarySearch" type="text" placeholder="Search secondary tags…" />
+      <label style="margin:6px 0 6px"><input type="checkbox" id="noTagSecondary"> Include ‘No Tags’</label>
+      <div class="tag-list" id="secondaryTags"></div>
+      <div class="btn-row">
+        <button id="selectAllSecondary" class="btn small">Select All</button>
+        <button id="deselectAllSecondary" class="btn secondary small">Deselect All</button>
+      </div>
+
+      <h4>Compact mode</h4>
+      <input id="compactSlider" type="range" min="0.85" max="1.15" step="0.01" value="0.95" class="slider" />
+      <div class="btn-row">
+        <button id="resetFilters" class="btn secondary small">Reset filters</button>
       </div>
     </div>
+  </aside>
 
-    <div class="filter-section">
-      <h4>Compact Mode</h4>
-      <input type="range" id="compactSlider" min="0.6" max="1.2" step="0.1" value="1" class="slider" />
-      <button id="resetFilters">Reset Filters</button>
-    </div>
-  </div>
+  <div class="divider" id="dragDivider" title="Drag to resize the left panel"></div>
 
-  <div class="right">
+  <section class="right">
     <h3>Contacts</h3>
-    <p id="status">Waiting to load data...</p>
+    <p id="status" class="muted">Waiting to load data…</p>
+
     <table id="results">
-      <thead><tr><th>First Name</th><th>Last Name</th><th>Email</th><th>Tags</th></tr></thead>
+      <thead>
+        <tr>
+          <th data-col="first">First Name<div class="col-resizer"></div></th>
+          <th data-col="last">Last Name<div class="col-resizer"></div></th>
+          <th data-col="email">Email<div class="col-resizer"></div></th>
+          <th data-col="tags">Tags<div class="col-resizer"></div></th>
+        </tr>
+      </thead>
       <tbody></tbody>
     </table>
-  </div>
-</div>
+  </section>
+</main>
 
-<div class="modal" id="topTagsModal">
-  <h3>Top 20 Tags</h3>
-  <ul id="topTagsList"></ul>
-  <button id="closeModal">Close</button>
+<!-- Top tags modal -->
+<div class="modal" id="topTagsModal" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="topTagsTitle">
+    <header>
+      <h4 id="topTagsTitle">Top Tags</h4>
+      <button id="closeModal" class="btn secondary small">Close</button>
+    </header>
+    <div class="content">
+      <ol id="topTagsList" style="padding-left:18px;margin:0"></ol>
+    </div>
+  </div>
 </div>
 
 <script>
-let rows = [];
-let allTags = [];
-let primarySelected = new Set();
-let secondarySelected = new Set();
+/* ---------- State ---------- */
+let rows = [];                // all contacts
+let allTags = [];             // unique tags
+const primarySelected = new Set();
+const secondarySelected = new Set();
 let logicMode = "and";
 
-const primaryContainer = document.getElementById("primaryTags");
-const secondaryContainer = document.getElementById("secondaryTags");
+/* ---------- Elements ---------- */
 const tbody = document.querySelector("#results tbody");
+const primaryBox = document.getElementById("primaryTags");
+const secondaryBox = document.getElementById("secondaryTags");
 
-function render() {
-  tbody.innerHTML = "";
-  let filtered = [...rows];
+/* ---------- Helpers ---------- */
+const ls = (k,v) => v===undefined ? localStorage.getItem(k) : localStorage.setItem(k,v);
+const splitTags = s => (s || "")
+  .split(",")
+  .map(t => t.trim())
+  .filter(Boolean);
 
-  // Filter logic
-  const selectedPrimary = [...primarySelected];
-  const selectedSecondary = [...secondarySelected];
+/* ---------- Rendering ---------- */
+function render(){
+  const includeNoPrimary = document.getElementById("noTagPrimary").checked;
+  const includeNoSecondary = document.getElementById("noTagSecondary").checked;
 
-  filtered = filtered.filter(r => {
-    const tags = r.tags || [];
+  // Grey out tag lists when “No Tags” is checked
+  primaryBox.classList.toggle("disabled-area", includeNoPrimary);
+  secondaryBox.classList.toggle("disabled-area", includeNoSecondary);
 
-    // Handle 'No Tags'
-    const noTags = tags.length === 0;
-    const matchPrimary = selectedPrimary.length
-      ? logicMode === "and"
-        ? selectedPrimary.every(t => tags.includes(t))
-        : selectedPrimary.some(t => tags.includes(t))
+  const prim = [...primarySelected];
+  const sec = [...secondarySelected];
+
+  const filtered = rows.filter(r=>{
+    const tags = r.tags;
+    const hasNoTags = tags.length === 0;
+
+    // If either “No Tags” checkbox is ticked and this contact has no tags → include
+    if ((includeNoPrimary || includeNoSecondary) && hasNoTags) return true;
+
+    // If “No Tags” is not ticked and contact has no tags → exclude
+    if (!includeNoPrimary && !includeNoSecondary && hasNoTags) return false;
+
+    // Primary matching
+    const primaryOK = prim.length
+      ? (logicMode === "and"
+          ? prim.every(t => tags.includes(t))
+          : prim.some(t => tags.includes(t)))
       : true;
 
-    const matchSecondary = selectedSecondary.length
-      ? selectedSecondary.every(t => tags.includes(t))
+    // Secondary: include if all selected secondary tags are present (i.e., filter down)
+    const secondaryOK = sec.length
+      ? sec.every(t => tags.includes(t))
       : true;
 
-    if (document.getElementById("noTagPrimary").checked && noTags) return true;
-    if (document.getElementById("noTagSecondary").checked && noTags) return true;
-
-    return matchPrimary && matchSecondary;
+    return primaryOK && secondaryOK;
   });
 
-  filtered.forEach(r => {
+  // Paint
+  tbody.innerHTML = "";
+  for(const r of filtered){
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${r.first}</td>
       <td>${r.last}</td>
       <td>${r.email}</td>
-      <td>${r.tags.join(", ")}</td>`;
+      <td>${r.tags.map(t=>`<span class="tag">${t}</span>`).join("")}</td>`;
     tbody.appendChild(tr);
-  });
-  document.getElementById("status").textContent = `${filtered.length} contact(s) displayed.`;
+  }
+  document.getElementById("status").textContent = `${filtered.length} result(s)`;
 }
 
-function buildTagBoxes() {
-  const sortedTags = [...allTags].sort();
-  primaryContainer.innerHTML = "";
-  secondaryContainer.innerHTML = "";
+/* ---------- Build tag checklists ---------- */
+function buildTagLists(){
+  const mkList = (box,set,idPrefix) =>{
+    box.innerHTML = "";
+    const q = (idPrefix==="p" ? document.getElementById("primarySearch").value.trim().toLowerCase()
+                              : document.getElementById("secondarySearch").value.trim().toLowerCase());
+    const tags = allTags
+      .filter(t => t.toLowerCase().includes(q))
+      .sort((a,b)=>a.localeCompare(b));
 
-  sortedTags.forEach(tag => {
-    const p = document.createElement("label");
-    p.innerHTML = `<input type="checkbox" value="${tag}"> ${tag}`;
-    primaryContainer.appendChild(p.cloneNode(true));
-    secondaryContainer.appendChild(p);
-  });
-
-  // Add event listeners
-  [primaryContainer, secondaryContainer].forEach(container => {
-    container.querySelectorAll("input[type='checkbox']").forEach(cb => {
-      cb.addEventListener("change", () => {
-        const set = container.id === "primaryTags" ? primarySelected : secondarySelected;
-        if (cb.checked) set.add(cb.value); else set.delete(cb.value);
+    for(const t of tags){
+      const id = `${idPrefix}-${t.replace(/\s+/g,"_")}`;
+      const wrap = document.createElement("label");
+      wrap.innerHTML = `<input type="checkbox" id="${id}" value="${t}"> ${t}`;
+      const cb = wrap.querySelector("input");
+      cb.checked = set.has(t);
+      cb.addEventListener("change", e=>{
+        if(e.target.checked) set.add(t); else set.delete(t);
         render();
+        saveSelections();
       });
-    });
-  });
+      box.appendChild(wrap);
+    }
+  };
+  mkList(primaryBox, primarySelected, "p");
+  mkList(secondaryBox, secondarySelected, "s");
 }
 
-// Compact slider
-document.getElementById("compactSlider").addEventListener("input", e => {
-  document.body.style.zoom = e.target.value;
+/* ---------- Save & restore selections ---------- */
+function saveSelections(){
+  ls("tc_primary", JSON.stringify([...primarySelected]));
+  ls("tc_secondary", JSON.stringify([...secondarySelected]));
+}
+function restoreSelections(){
+  try{
+    const p = JSON.parse(ls("tc_primary") || "[]"); p.forEach(t=>primarySelected.add(t));
+    const s = JSON.parse(ls("tc_secondary") || "[]"); s.forEach(t=>secondarySelected.add(t));
+  }catch{}
+}
+
+/* ---------- Column resizing + memory ---------- */
+(function enableColumnResizing(){
+  const ths = document.querySelectorAll("#results thead th");
+  ths.forEach((th, idx)=>{
+    // restore
+    const key = `tc_col_${idx}`;
+    const w = ls(key); if(w) th.style.width = w + "px";
+
+    const handle = th.querySelector(".col-resizer");
+    let startX, startW;
+    handle.addEventListener("mousedown", e=>{
+      startX = e.pageX; startW = th.offsetWidth;
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    });
+    const onMove = e=>{
+      const nw = Math.max(80, startW + (e.pageX - startX));
+      th.style.width = nw + "px";
+    };
+    const onUp = ()=>{
+      ls(key, parseInt(th.getBoundingClientRect().width,10));
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    };
+  });
+})();
+
+/* ---------- Left panel resizer ---------- */
+(function enablePanelResizer(){
+  const divider = document.getElementById("dragDivider");
+  const left = document.querySelector(".left");
+  const saved = ls("tc_left_w"); if(saved) left.style.width = saved + "px";
+  let sx, sw;
+  divider.addEventListener("mousedown", e=>{
+    sx = e.pageX; sw = left.offsetWidth;
+    document.addEventListener("mousemove", mm);
+    document.addEventListener("mouseup", mu);
+  });
+  const mm = e=>{
+    const w = Math.min(540, Math.max(240, sw + (e.pageX - sx)));
+    left.style.width = w + "px";
+  };
+  const mu = ()=>{
+    ls("tc_left_w", parseInt(left.getBoundingClientRect().width,10));
+    document.removeEventListener("mousemove", mm);
+    document.removeEventListener("mouseup", mu);
+  };
+})();
+
+/* ---------- Compact slider ---------- */
+document.getElementById("compactSlider").addEventListener("input", e=>{
+  document.body.style.zoom = e.target.value; // simple, effective
+  ls("tc_zoom", e.target.value);
+});
+(function(){ const z = ls("tc_zoom"); if(z) {document.body.style.zoom=z; document.getElementById("compactSlider").value=z;} })();
+
+/* ---------- Buttons & interactions ---------- */
+document.getElementsByName("logicMode").forEach(r=>{
+  r.addEventListener("change", e=>{ logicMode = e.target.value; render(); });
 });
 
-// Select/Deselect All
-function selectAll(containerId, set, checked = true) {
-  document.querySelectorAll(`#${containerId} input[type='checkbox']`).forEach(cb => {
-    cb.checked = checked;
-    if (checked) set.add(cb.value); else set.delete(cb.value);
-  });
-  render();
-}
+document.getElementById("primarySearch").addEventListener("input", buildTagLists);
+document.getElementById("secondarySearch").addEventListener("input", buildTagLists);
 
-document.getElementById("selectAllPrimary").onclick = () => selectAll("primaryTags", primarySelected, true);
-document.getElementById("deselectAllPrimary").onclick = () => selectAll("primaryTags", primarySelected, false);
-document.getElementById("selectAllSecondary").onclick = () => selectAll("secondaryTags", secondarySelected, true);
-document.getElementById("deselectAllSecondary").onclick = () => selectAll("secondaryTags", secondarySelected, false);
+document.getElementById("selectAllPrimary").onclick = ()=>{ allTags.forEach(t=>primarySelected.add(t)); saveSelections(); buildTagLists(); render(); };
+document.getElementById("deselectAllPrimary").onclick = ()=>{ primarySelected.clear(); saveSelections(); buildTagLists(); render(); };
+document.getElementById("selectAllSecondary").onclick = ()=>{ allTags.forEach(t=>secondarySelected.add(t)); saveSelections(); buildTagLists(); render(); };
+document.getElementById("deselectAllSecondary").onclick = ()=>{ secondarySelected.clear(); saveSelections(); buildTagLists(); render(); };
 
-// Reset filters
-document.getElementById("resetFilters").onclick = () => {
-  primarySelected.clear();
-  secondarySelected.clear();
-  document.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
-  render();
+document.getElementById("noTagPrimary").addEventListener("change", render);
+document.getElementById("noTagSecondary").addEventListener("change", render);
+
+document.getElementById("resetFilters").onclick = ()=>{
+  primarySelected.clear(); secondarySelected.clear();
+  document.getElementById("noTagPrimary").checked = false;
+  document.getElementById("noTagSecondary").checked = false;
+  saveSelections(); buildTagLists(); render();
 };
 
-// Logic toggle
-document.getElementsByName("logicMode").forEach(radio => {
-  radio.addEventListener("change", e => {
-    logicMode = e.target.value;
-    render();
-  });
-});
-
-// Top tags modal
-document.getElementById("topTagsBtn").onclick = () => {
-  const counts = {};
-  rows.forEach(r => r.tags.forEach(t => counts[t] = (counts[t] || 0) + 1));
-  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0,20);
-  const list = document.getElementById("topTagsList");
-  list.innerHTML = sorted.map(([tag, count]) => `<li>${tag} (${count})</li>`).join("");
+/* ---------- Top tags modal ---------- */
+document.getElementById("topTagsBtn").onclick = ()=>{
+  const counts = new Map();
+  rows.forEach(r=>r.tags.forEach(t=>counts.set(t,(counts.get(t)||0)+1)));
+  const arr = [...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,20);
+  const ol = document.getElementById("topTagsList");
+  ol.innerHTML = arr.map(([t,c])=>`<li>${t} <span class="muted">(${c})</span></li>`).join("");
   document.getElementById("topTagsModal").classList.add("show");
 };
-document.getElementById("closeModal").onclick = () => document.getElementById("topTagsModal").classList.remove("show");
+document.getElementById("closeModal").onclick = ()=>document.getElementById("topTagsModal").classList.remove("show");
 
-// --- Secure Fetch from hosted backend ---
-document.getElementById("fetchGHL").onclick = async () => {
+/* ---------- Fetch from GHL via your backend ---------- */
+document.getElementById("fetchGHL").onclick = async ()=>{
   const apiKey = prompt("Paste your GoHighLevel API key:");
-  if (!apiKey) return alert("No API key entered.");
-  document.getElementById("status").textContent = "Loading contacts...";
+  if(!apiKey) return;
 
-  try {
+  document.getElementById("status").textContent = "Loading contacts…";
+  try{
     const res = await fetch("/contacts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({ apiKey })
     });
-
-    if (!res.ok) throw new Error("Error fetching contacts");
-    const json = await res.json();
-
-    rows = (json.contacts || []).map(c => ({
+    if(!res.ok){
+      const txt = await res.text();
+      throw new Error(txt || "Fetch failed");
+    }
+    const data = await res.json();
+    rows = (data.contacts||[]).map(c=>({
       first: c.firstName || "",
-      last: c.lastName || "",
-      email: c.email || "",
-      tags: Array.isArray(c.tags)
-        ? c.tags
-        : (c.tags ? c.tags.split(",").map(t => t.trim()) : [])
+      last:  c.lastName  || "",
+      email: c.email     || "",
+      tags:  Array.isArray(c.tags) ? c.tags : splitTags(c.tags)
     }));
 
+    // Build unique tag list
     const set = new Set();
-    rows.forEach(r => r.tags.forEach(t => set.add(t)));
+    rows.forEach(r=>r.tags.forEach(t=>set.add(t)));
     allTags = [...set];
 
-    buildTagBoxes();
+    restoreSelections();
+    buildTagLists();
     render();
     alert(`Loaded ${rows.length} contact(s) securely from GHL`);
-  } catch (err) {
+  }catch(err){
     console.error(err);
     alert("Could not fetch contacts. Please check your API key or try again later.");
+    document.getElementById("status").textContent = "Fetch failed.";
   }
 };
 </script>
