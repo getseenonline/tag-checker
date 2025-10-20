@@ -8,7 +8,7 @@ import { fileURLToPath } from "url";
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Fix __dirname in ES modules
+// Fix __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -18,36 +18,67 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 /* ---------------------------------------------------------
-   🔁 Fetch ALL Contacts from GoHighLevel (with pagination)
+   ⚡ Fast Parallel Fetch: Get ALL Contacts from GoHighLevel
 --------------------------------------------------------- */
 async function fetchAllGHLContacts(apiKey) {
+  const limit = 100;
   let allContacts = [];
-  let page = 1;
-  const limit = 100; // Max allowed per page
 
-  while (true) {
-    const url = `https://rest.gohighlevel.com/v1/contacts/?limit=${limit}&page=${page}`;
-    console.log(`📄 Fetching page ${page}...`);
+  console.log("📄 Fetching first page to determine total...");
+  const firstRes = await fetch(`https://rest.gohighlevel.com/v1/contacts/?limit=${limit}&page=1`, {
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+  });
 
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-    });
+  if (!firstRes.ok) {
+    const text = await firstRes.text();
+    throw new Error(`Failed on first page: ${text}`);
+  }
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Failed to fetch (page ${page}): ${text}`);
-    }
+  const firstData = await firstRes.json();
+  const total = firstData.meta?.total ?? firstData.contacts?.length ?? 0;
+  const firstContacts = firstData.contacts || [];
+  allContacts.push(...firstContacts);
 
-    const data = await res.json();
-    const contacts = data.contacts || [];
-    allContacts = allContacts.concat(contacts);
+  // Calculate total pages
+  const totalPages = Math.ceil(total / limit);
+  console.log(`📊 Estimated total: ${total} contacts (${totalPages} pages)`);
 
-    // Stop if no more pages
-    if (!data.meta || !data.meta.nextPage) break;
-    page++;
+  // Build page list (skip 1 because we already fetched it)
+  const pages = [];
+  for (let p = 2; p <= totalPages; p++) pages.push(p);
+
+  // Fetch in parallel batches of 5
+  const batchSize = 5;
+  for (let i = 0; i < pages.length; i += batchSize) {
+    const batch = pages.slice(i, i + batchSize);
+    console.log(`🚀 Fetching pages ${batch.join(", ")}...`);
+
+    const results = await Promise.all(
+      batch.map(async (page) => {
+        const url = `https://rest.gohighlevel.com/v1/contacts/?limit=${limit}&page=${page}`;
+        const res = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!res.ok) {
+          const txt = await res.text();
+          console.warn(`⚠️ Failed page ${page}: ${txt}`);
+          return [];
+        }
+
+        const data = await res.json();
+        return data.contacts || [];
+      })
+    );
+
+    // Combine batch results
+    results.forEach(list => allContacts.push(...list));
   }
 
   console.log(`✅ Total contacts fetched: ${allContacts.length}`);
