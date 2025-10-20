@@ -6,20 +6,74 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 10000;
 
-// Handle ESM path resolution
+// Fix __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-
-// ✅ Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, "public")));
 
-// ✅ Root route to serve your Tag Checker app
+/* ---------------------------------------------------------
+   🔁 Fetch ALL Contacts from GoHighLevel (with pagination)
+--------------------------------------------------------- */
+async function fetchAllGHLContacts(apiKey) {
+  let allContacts = [];
+  let page = 1;
+  const limit = 100; // Max allowed per page
+
+  while (true) {
+    const url = `https://rest.gohighlevel.com/v1/contacts/?limit=${limit}&page=${page}`;
+    console.log(`📄 Fetching page ${page}...`);
+
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Failed to fetch (page ${page}): ${text}`);
+    }
+
+    const data = await res.json();
+    const contacts = data.contacts || [];
+    allContacts = allContacts.concat(contacts);
+
+    // Stop if no more pages
+    if (!data.meta || !data.meta.nextPage) break;
+    page++;
+  }
+
+  console.log(`✅ Total contacts fetched: ${allContacts.length}`);
+  return allContacts;
+}
+
+/* ---------------------------------------------------------
+   🌐 Endpoint for Tag Checker front-end
+--------------------------------------------------------- */
+app.post("/contacts", async (req, res) => {
+  try {
+    const { apiKey } = req.body;
+    if (!apiKey) return res.status(400).json({ error: "Missing API key" });
+
+    console.log("🔑 Fetching contacts from GoHighLevel...");
+    const contacts = await fetchAllGHLContacts(apiKey);
+    res.json({ contacts });
+  } catch (err) {
+    console.error("❌ Error fetching contacts:", err);
+    res.status(500).json({ error: "Failed to fetch contacts" });
+  }
+});
+
+/* ---------------------------------------------------------
+   🏠 Serve your Tag Checker interface
+--------------------------------------------------------- */
 app.get("/", (req, res) => {
   const filePath = path.join(__dirname, "public", "tag-checker-v2.html");
   res.sendFile(filePath, (err) => {
@@ -30,49 +84,9 @@ app.get("/", (req, res) => {
   });
 });
 
-// ✅ API route to fetch contacts from GoHighLevel
-app.post("/contacts", async (req, res) => {
-  try {
-    const { apiKey } = req.body;
-    if (!apiKey) {
-      return res.status(400).json({ error: "Missing API key" });
-    }
-
-    console.log("🔑 Fetching contacts using API key...");
-
-    // Call GoHighLevel API
-    const response = await fetch("https://rest.gohighlevel.com/v1/contacts/", {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("❌ GHL API Error:", errorText);
-      return res
-        .status(response.status)
-        .json({ error: "Failed to fetch from GHL", details: errorText });
-    }
-
-    const data = await response.json();
-    console.log("✅ Contacts fetched:", data.contacts?.length || 0);
-
-    res.json({ contacts: data.contacts || [] });
-  } catch (error) {
-    console.error("🔥 Server Error fetching contacts:", error);
-    res.status(500).json({ error: "Failed to fetch contacts" });
-  }
-});
-
-// ✅ Health check endpoint
-app.get("/health", (req, res) => {
-  res.status(200).send("Server is running successfully!");
-});
-
-// ✅ Start the server
+/* ---------------------------------------------------------
+   🚀 Start the server
+--------------------------------------------------------- */
 app.listen(PORT, () => {
   console.log(`✅ Server running successfully on port ${PORT}`);
 });
