@@ -81,6 +81,11 @@ input[type="text"] {
   padding: 4px 0;
 }
 
+.disabled-area {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -260,15 +265,22 @@ function buildTagLists(){
     const div = document.getElementById(id);
     const q = document.getElementById(searchId).value.toLowerCase();
     div.innerHTML = "";
-    allTags
+
+    // Ensure "No Tags" is always first
+    const sortedTags = ["No Tags", ...allTags.filter(t => t !== "No Tags").sort((a,b)=>a.localeCompare(b))];
+
+    sortedTags
       .filter(t=>t.toLowerCase().includes(q))
-      .sort((a,b)=>a.localeCompare(b))
       .forEach(t=>{
         const l = document.createElement("label");
         const cb = document.createElement("input");
         cb.type="checkbox"; cb.value=t;
         cb.checked = set.has(t);
-        cb.onchange = e=>{ e.target.checked?set.add(t):set.delete(t); render(); };
+        cb.onchange = e=>{
+          e.target.checked ? set.add(t) : set.delete(t);
+          handleNoTagsInteraction();
+          render();
+        };
         l.appendChild(cb);
         l.append(" "+t);
         div.appendChild(l);
@@ -276,11 +288,36 @@ function buildTagLists(){
   };
   makeList("primaryTags",primarySelected,"primarySearch");
   makeList("secondaryTags",secondarySelected,"secondarySearch");
+  handleNoTagsInteraction();
+}
+
+function handleNoTagsInteraction(){
+  const noTagsPrimary = primarySelected.has("No Tags");
+  const noTagsSecondary = secondarySelected.has("No Tags");
+
+  const greyOthers = (listId, disable) => {
+    const list = document.getElementById(listId);
+    if (!list) return;
+    if (disable) list.classList.add("disabled-area");
+    else list.classList.remove("disabled-area");
+  };
+
+  if (logicMode === "and") {
+    greyOthers("primaryTags", noTagsPrimary);
+    greyOthers("secondaryTags", noTagsSecondary);
+  } else {
+    greyOthers("primaryTags", false);
+    greyOthers("secondaryTags", false);
+  }
 }
 
 document.getElementById("primarySearch").oninput = buildTagLists;
 document.getElementById("secondarySearch").oninput = buildTagLists;
-document.getElementsByName("logic").forEach(r=>r.onchange = e=>{logicMode=e.target.value;render();});
+document.getElementsByName("logic").forEach(r=>r.onchange = e=>{
+  logicMode=e.target.value;
+  handleNoTagsInteraction();
+  render();
+});
 
 document.getElementById("selectAllPrimary").onclick=()=>{allTags.forEach(t=>primarySelected.add(t));buildTagLists();render();};
 document.getElementById("deselectAllPrimary").onclick=()=>{primarySelected.clear();buildTagLists();render();};
@@ -333,11 +370,10 @@ document.getElementById("fetchGHL").onclick = async ()=>{
     const data = await response.json();
     rows = (data.contacts||[]).map(c=>({
       first: c.firstName||"",
-      last: c.lastName||"",
+      last:  c.lastName||"",
       email: c.email||"",
       tags: (Array.isArray(c.tags)?c.tags:splitTags(c.tags)).filter(Boolean)
     }));
-    // Add "No Tags"
     rows.forEach(r=>{ if(!r.tags.length) r.tags=["No Tags"]; });
     const tagSet = new Set();
     rows.forEach(r=>r.tags.forEach(t=>tagSet.add(t)));
