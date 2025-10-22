@@ -218,6 +218,11 @@ let logicMode = "and";
 const splitTags = s => (s||"").split(",").map(t=>t.trim()).filter(Boolean);
 function setStatus(msg){ document.getElementById("status").textContent = msg; }
 
+/* Helper: build sorted tags with "No Tags" first */
+function sortedTagListFrom(sourceTags){
+  return ["No Tags", ...sourceTags.filter(t=>t!=="No Tags").sort((a,b)=>a.localeCompare(b))];
+}
+
 /* =========================
    Rendering contacts
 ========================= */
@@ -260,8 +265,7 @@ function buildTagLists(){
     const q = document.getElementById(searchId).value.toLowerCase();
     div.innerHTML = "";
 
-    // "No Tags" always first
-    const sortedTags = ["No Tags", ...allTags.filter(t => t !== "No Tags").sort((a,b)=>a.localeCompare(b))];
+    const sortedTags = sortedTagListFrom(allTags);
 
     sortedTags
       .filter(t=>t.toLowerCase().includes(q))
@@ -285,30 +289,48 @@ function buildTagLists(){
   handleNoTagsInteraction();
 }
 
-/* Grey out behaviour when No Tags + AND */
+/* Grey out behaviour when No Tags + AND (greys out BOTH lists) */
 function handleNoTagsInteraction(){
-  const noTagsPrimary = primarySelected.has("No Tags");
-  const noTagsSecondary = secondarySelected.has("No Tags");
+  const noTagsChosen = (primarySelected.has("No Tags") || secondarySelected.has("No Tags"));
+  const shouldGrey = (logicMode === "and" && noTagsChosen);
 
-  const greyOthers = (listId, disable) => {
-    const list = document.getElementById(listId);
+  const grey = (id, dis) => {
+    const list = document.getElementById(id);
     if (!list) return;
-    if (disable) list.classList.add("disabled-area");
+    if (dis) list.classList.add("disabled-area");
     else list.classList.remove("disabled-area");
   };
 
-  if (logicMode === "and") {
-    greyOthers("primaryTags", noTagsPrimary);
-    greyOthers("secondaryTags", noTagsSecondary);
-  } else {
-    greyOthers("primaryTags", false);
-    greyOthers("secondaryTags", false);
-  }
+  grey("primaryTags", shouldGrey);
+  grey("secondaryTags", shouldGrey);
 }
 
 /* =========================
-   UI events
+   Select/Deselect helpers that obey current search filter
 ========================= */
+function filteredTagNames(listId, searchInputId){
+  const q = document.getElementById(searchInputId).value.toLowerCase();
+  return sortedTagListFrom(allTags).filter(t=>t.toLowerCase().includes(q));
+}
+
+document.getElementById("selectAllPrimary").onclick=()=>{
+  filteredTagNames("primaryTags","primarySearch").forEach(t=>primarySelected.add(t));
+  buildTagLists();render();
+};
+document.getElementById("deselectAllPrimary").onclick=()=>{
+  filteredTagNames("primaryTags","primarySearch").forEach(t=>primarySelected.delete(t));
+  buildTagLists();render();
+};
+document.getElementById("selectAllSecondary").onclick=()=>{
+  filteredTagNames("secondaryTags","secondarySearch").forEach(t=>secondarySelected.add(t));
+  buildTagLists();render();
+};
+document.getElementById("deselectAllSecondary").onclick=()=>{
+  filteredTagNames("secondaryTags","secondarySearch").forEach(t=>secondarySelected.delete(t));
+  buildTagLists();render();
+};
+
+/* Search + AND/OR */
 document.getElementById("primarySearch").oninput = buildTagLists;
 document.getElementById("secondarySearch").oninput = buildTagLists;
 document.getElementsByName("logic").forEach(r=>r.onchange = e=>{
@@ -316,12 +338,6 @@ document.getElementsByName("logic").forEach(r=>r.onchange = e=>{
   handleNoTagsInteraction();
   render();
 });
-
-/* Select/Deselect */
-document.getElementById("selectAllPrimary").onclick=()=>{allTags.forEach(t=>primarySelected.add(t));buildTagLists();render();};
-document.getElementById("deselectAllPrimary").onclick=()=>{primarySelected.clear();buildTagLists();render();};
-document.getElementById("selectAllSecondary").onclick=()=>{allTags.forEach(t=>secondarySelected.add(t));buildTagLists();render();};
-document.getElementById("deselectAllSecondary").onclick=()=>{secondarySelected.clear();buildTagLists();render();};
 
 /* Display size slider (remembers) */
 document.getElementById("compactSlider").oninput = e=>{
