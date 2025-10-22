@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tag Checker v2.3</title>
+<title>Tag Checker v2.4</title>
 <style>
   :root{
     --brand:#0E1A40;
@@ -63,7 +63,6 @@
   }
   button:disabled{opacity:.45;cursor:not-allowed;filter:none}
   button:hover:not(:disabled){filter:brightness(1.1)}
-
   #manageAccounts{box-shadow:0 6px 16px rgba(0,0,0,.22)}
 
   .btn-row{display:flex;gap:10px;flex-wrap:wrap}
@@ -145,6 +144,16 @@
     margin-bottom:6px;
   }
   #activeAccountDisplay.inactive{color:#888;font-style:italic}
+
+  /* FOOTER */
+  footer{
+    text-align:right;
+    color:#999;
+    font-size:0.9em;
+    margin-top:10px;
+    padding:10px 6px 6px;
+    border-top:1px solid var(--border);
+  }
 </style>
 </head>
 <body>
@@ -201,20 +210,9 @@
       </thead>
       <tbody></tbody>
     </table>
-    <div class="bottom-pad"></div>
+    <footer>Tag Checker v2.4 — By Get Seen Online</footer>
   </section>
 </main>
-
-<!-- Top Tags Modal -->
-<div class="modal" id="topTagsModal">
-  <div class="modal-content">
-    <h3>Top 20 Tags</h3>
-    <ol id="topTagsList"></ol>
-    <div class="modal-actions">
-      <button id="closeTopTags">Close</button>
-    </div>
-  </div>
-</div>
 
 <!-- Manage Accounts Modal -->
 <div class="modal" id="accountsModal">
@@ -248,16 +246,12 @@
 </div>
 
 <script>
-/* ------------- CORE STATE ------------- */
 let rows=[],allTags=[];
 const primarySelected=new Set(),secondarySelected=new Set();
 let logicMode="and";
-
-/* Utility */
 const splitTags=s=>(s||"").split(",").map(t=>t.trim()).filter(Boolean);
 function setStatus(m){document.getElementById("status").textContent=m;}
 
-/* Render contacts */
 function render(){
   const filtered=rows.filter(r=>{
     const tags=r.tags.length?r.tags:["No Tags"];
@@ -276,7 +270,6 @@ function render(){
   setStatus(`${filtered.length} contact(s) shown.`);
 }
 
-/* Build tag lists */
 function buildTagLists(){
   const make=(id,set,search)=>{
     const div=document.getElementById(id),q=document.getElementById(search).value.toLowerCase();
@@ -300,30 +293,20 @@ function handleNoTagsInteraction(){
   if(logicMode==="and"){grey("primaryTags",nP);grey("secondaryTags",nS);}else{grey("primaryTags",false);grey("secondaryTags",false);}
 }
 
-/* Events */
 document.getElementById("primarySearch").oninput=buildTagLists;
 document.getElementById("secondarySearch").oninput=buildTagLists;
 document.getElementsByName("logic").forEach(r=>r.onchange=e=>{logicMode=e.target.value;handleNoTagsInteraction();render();});
-
 document.getElementById("selectAllPrimary").onclick=()=>{allTags.forEach(t=>primarySelected.add(t));buildTagLists();render();};
 document.getElementById("deselectAllPrimary").onclick=()=>{primarySelected.clear();buildTagLists();render();};
 document.getElementById("selectAllSecondary").onclick=()=>{allTags.forEach(t=>secondarySelected.add(t));buildTagLists();render();};
 document.getElementById("deselectAllSecondary").onclick=()=>{secondarySelected.clear();buildTagLists();render();};
 
-/* Zoom slider */
 document.getElementById("compactSlider").oninput=e=>{document.body.style.zoom=e.target.value;localStorage.setItem("zoom",e.target.value);}
 (function(){const z=localStorage.getItem("zoom");if(z){document.body.style.zoom=z;document.getElementById("compactSlider").value=z;}})();
 
-/* Top Tags modal */
-document.getElementById("topTags").onclick=()=>{const m=new Map();rows.forEach(r=>r.tags.forEach(t=>m.set(t,(m.get(t)||0)+1)));const list=[...m.entries()].sort((a,b)=>b[1]-a[1]).slice(0,20);document.getElementById("topTagsList").innerHTML=list.map(([t,c])=>`<li>${t} (${c})</li>`).join("");document.getElementById("topTagsModal").classList.add("show");};
-document.getElementById("closeTopTags").onclick=()=>document.getElementById("topTagsModal").classList.remove("show");
-
-/* Column resizers */
-document.querySelectorAll("th").forEach(th=>{const h=th.querySelector(".col-resizer");let x,w;h.onmousedown=e=>{x=e.pageX;w=th.offsetWidth;document.onmousemove=ev=>{const nw=w+(ev.pageX-x);th.style.width=nw+"px";localStorage.setItem("colw_"+th.cellIndex,nw);};document.onmouseup=()=>document.onmousemove=null;};const cw=localStorage.getItem("colw_"+th.cellIndex);if(cw)th.style.width=cw+"px";});
-
-/* ACCOUNT MODAL */
+/* ACCOUNT SYSTEM */
 let accounts=JSON.parse(localStorage.getItem("ghlAccounts")||"[]");
-let activeAccount=localStorage.getItem("activeAccount")||"";
+let activeAccount="";
 const accDisplay=document.getElementById("activeAccountDisplay");
 const accModal=document.getElementById("accountsModal");
 
@@ -334,11 +317,8 @@ function saveAccounts(){localStorage.setItem("ghlAccounts",JSON.stringify(accoun
 function renderAccountList(){
   const sel=document.getElementById("accountList");
   sel.innerHTML=accounts.map(a=>`<option value="${a.name}">${a.name}</option>`).join("");
-  if(accounts.length){
-    if(!activeAccount||!accounts.find(a=>a.name===activeAccount)){activeAccount=accounts[0].name;}
-    sel.value=activeAccount;
-  }
-  document.getElementById("fetchContacts").disabled=!(accounts.length&&sel.value);
+  sel.value=activeAccount||"";
+  document.getElementById("fetchContacts").disabled=!(sel.value);
 }
 function updateAccountDisplay(){
   if(activeAccount){accDisplay.textContent=`Account: ${activeAccount}`;accDisplay.classList.remove("inactive");}
@@ -346,7 +326,7 @@ function updateAccountDisplay(){
 }
 
 document.getElementById("accountList").onchange=e=>{activeAccount=e.target.value||"";document.getElementById("fetchContacts").disabled=!activeAccount;updateAccountDisplay();};
-document.getElementById("saveAccount").onclick=()=>{const n=document.getElementById("accountName").value.trim(),k=document.getElementById("apiKey").value.trim();if(!n||!k)return alert("Enter account name and key");if(accounts.find(a=>a.name===n))return alert("Duplicate name.");accounts.push({name:n,key:k});activeAccount=n;document.getElementById("accountName").value="";document.getElementById("apiKey").value="";saveAccounts();alert("Account saved.");document.getElementById("fetchContacts").disabled=false;};
+document.getElementById("saveAccount").onclick=()=>{const n=document.getElementById("accountName").value.trim(),k=document.getElementById("apiKey").value.trim();if(!n||!k)return alert("Enter account name and key");if(accounts.find(a=>a.name===n))return alert("Duplicate name.");accounts.push({name:n,key:k});activeAccount="";document.getElementById("accountName").value="";document.getElementById("apiKey").value="";saveAccounts();alert("Account saved. Select it to continue.");};
 document.getElementById("deleteAccount").onclick=()=>{const sel=document.getElementById("accountList");if(!sel.value)return alert("Select account");if(!confirm("Delete this account?"))return;accounts=accounts.filter(a=>a.name!==sel.value);if(activeAccount===sel.value)activeAccount="";saveAccounts();alert("Deleted.");};
 document.getElementById("editAccount").onclick=()=>{const sel=document.getElementById("accountList");if(!sel.value)return alert("Select account");const newName=prompt("Rename account:",sel.value);if(!newName||newName.trim()===sel.value)return;if(accounts.find(a=>a.name===newName.trim()))return alert("Name exists.");const a=accounts.find(x=>x.name===sel.value);a.name=newName.trim();if(activeAccount===sel.value)activeAccount=a.name;saveAccounts();};
 
@@ -360,18 +340,11 @@ document.getElementById("fetchContacts").onclick=async()=>{
     rows=(data.contacts||[]).map(c=>({first:c.firstName||"",last:c.lastName||"",email:c.email||"",tags:(Array.isArray(c.tags)?c.tags:splitTags(c.tags)).filter(Boolean)}));
     rows.forEach(r=>{if(!r.tags.length)r.tags=["No Tags"];});
     const s=new Set();rows.forEach(r=>r.tags.forEach(t=>s.add(t)));allTags=[...s];
-    buildTagLists();render();updateAccountDisplay();alert(`Loaded ${rows.length} contacts.`);
+    buildTagLists();render();activeAccount=acc.name;saveAccounts();updateAccountDisplay();alert(`Loaded ${rows.length} contacts.`);
   }catch(e){console.error(e);alert("Error fetching contacts.");setStatus("Error fetching contacts.");}
 };
 
 renderAccountList();updateAccountDisplay();
 </script>
-
-<!-- 
-  Tag Checker v2.3 (Render + GitHub Edition)
-  Built for get-seenonline.com
-  Responsive sidebar, account management, and API persistence
-  Last updated: 22 October 2025
--->
 </body>
 </html>
