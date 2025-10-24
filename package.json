@@ -1,7 +1,7 @@
 {
-  "name": "tag-checker",
-  "version": "1.0.0",
-  "description": "",
+  "name": "tag-checker-v2",
+  "version": "2.6.0",
+  "description": "Tag Checker v2.6 — By Get Seen Online: GHL tag viewer and CSV importer.",
   "type": "module",
   "main": "server.js",
   "scripts": {
@@ -12,5 +12,10 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "node-fetch": "^3.3.2"
-  }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "Get Seen Online",
+  "license": "MIT"
 }
