@@ -103,6 +103,13 @@ app.post("/contacts", async (req, res) => {
 });
 
 /* ---------------------------------------------------------
+   🩵 Lightweight Keep-Alive Endpoint for UptimeRobot
+--------------------------------------------------------- */
+app.get("/ping", (req, res) => {
+  res.status(200).send("ok");
+});
+
+/* ---------------------------------------------------------
    🏠 Serve your Tag Checker interface
 --------------------------------------------------------- */
 app.get("/", (req, res) => {
