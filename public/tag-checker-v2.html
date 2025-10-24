@@ -86,24 +86,61 @@
   .tag{display:inline-block;margin:2px 6px 2px 0;padding:4px 8px;border-radius:999px;background:#eef2ff;color:var(--brand);border:1px solid #d7def6;font-size:12px}
   .col-resizer{position:absolute;top:0;right:0;width:6px;height:100%;cursor:col-resize;user-select:none}
 
-  .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:100}
-  .modal.show{display:flex}
-  .modal-content{
-    background:#fff;border-radius:12px;padding:18px 18px 20px;width:92%;max-width:520px;
-    box-shadow:0 22px 55px rgba(0,0,0,.35);border:1px solid var(--border)
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
   }
-  .modal-actions{display:flex;gap:10px;flex-wrap:wrap}
+  .modal.show {
+    display: flex;
+  }
+  .modal-content {
+    background:#fff;
+    border-radius:12px;
+    padding:18px 18px 20px;
+    width:92%;
+    max-width:520px;
+    box-shadow:0 22px 55px rgba(0,0,0,.35);
+    border:1px solid var(--border);
+    transition:transform .25s ease, opacity .25s ease;
+    transform:scale(.97);
+    opacity:0;
+  }
+  .modal.show .modal-content {
+    transform:scale(1);
+    opacity:1;
+  }
 
-  #activeAccountDisplay{font-weight:600;color:var(--brand);font-size:1.05em;margin-bottom:6px}
-  #activeAccountDisplay.inactive{color:#888;font-style:italic}
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  #activeAccountDisplay {
+    font-weight: 600;
+    color: var(--brand);
+    font-size: 1.05em;
+    margin-bottom: 6px;
+  }
+  #activeAccountDisplay.inactive {
+    color: #888;
+    font-style: italic;
+  }
 
   #clearTable {
-    background:#b64a4a;
-    box-shadow:0 4px 10px rgba(182,74,74,.3);
+    background: #b64a4a;
+    box-shadow: 0 4px 10px rgba(182,74,74,.3);
   }
   #clearTable:hover {
-    filter:brightness(1.1);
+    filter: brightness(1.1);
   }
+
 
   .sidebar-footer{text-align:center;color:#999;font-size:.9em;padding:12px 8px 14px;border-top:1px solid var(--border);margin-top:16px}
   .muted{opacity:.7}
@@ -149,8 +186,8 @@
 
     <div id="primaryTags" class="tag-list"></div>
     <div class="btn-row" style="margin-top:8px">
-      <button id="selectAllPrimary">Select All</button>
-      <button id="deselectAllPrimary">Deselect All</button>
+      <button id="selectAllPrimary" type="button">Select All</button>
+      <button id="deselectAllPrimary" type="button">Deselect All</button>
     </div>
 
     <h3>Secondary Tags</h3>
@@ -166,8 +203,8 @@
     />
     <div id="secondaryTags" class="tag-list"></div>
     <div class="btn-row" style="margin-top:8px">
-      <button id="selectAllSecondary">Select All</button>
-      <button id="deselectAllSecondary">Deselect All</button>
+      <button id="selectAllSecondary" type="button">Select All</button>
+      <button id="deselectAllSecondary" type="button">Deselect All</button>
     </div>
 
 
@@ -207,7 +244,7 @@
     <h3>Top 20 Tags</h3>
     <ol id="topTagsList"></ol>
     <div class="modal-actions">
-      <button id="closeTopTags">Close</button>
+      <button id="closeTopTags" type="button">Close</button>
     </div>
   </div>
 </div>
@@ -219,8 +256,8 @@
     <label for="accountList">Select account:</label>
     <select id="accountList" style="width:100%;margin:6px 0 10px;height:36px;border:1px solid var(--border);border-radius:8px;"></select>
     <div class="modal-actions" style="margin-bottom:14px">
-      <button id="editAccount">Edit Name</button>
-      <button id="deleteAccount">Delete</button>
+      <button id="editAccount" type="button">Edit Name</button>
+      <button id="deleteAccount" type="button">Delete</button>
     </div>
     <hr style="border:none;border-top:1px solid var(--border);margin:12px 0">
     <h4 style="margin:0 0 8px">Add New Account</h4>
@@ -233,13 +270,13 @@
       style="margin-bottom:10px">
 
     <div class="modal-actions" style="margin-bottom:14px">
-      <button id="saveAccount">Save Account</button>
+      <button id="saveAccount" type="button">Save Account</button>
     </div>
     <hr style="border:none;border-top:1px solid var(--border);margin:12px 0">
     <div class="modal-actions">
-      <button id="fetchContacts" disabled>Get Data from GHL</button>
-      <button id="clearTable">Clear Table</button>
-      <button id="closeAccounts">Close</button>
+      <button id="fetchContacts" type="button" disabled>Get Data from GHL</button>
+      <button id="clearTable" type="button">Clear Table</button>
+      <button id="closeAccounts" type="button">Close</button>
     </div>
 
   </div>
@@ -400,6 +437,8 @@ function greyWithinGroup(containerId, grey){
     if(v !== "No Tags"){ l.classList.toggle("label-disabled", grey); }
     else { l.classList.remove("label-disabled"); }
   });
+}
+
 function applyNoTagsGreying() {
   const greyPrimary = logicMode === "and" && primarySelected.has("No Tags");
   const greySecondary = logicMode === "and" && secondarySelected.has("No Tags");
@@ -488,7 +527,7 @@ document.querySelectorAll("th").forEach(th=>{
 
 /* ================= Accounts modal + storage ================= */
 let accounts = JSON.parse(localStorage.getItem("ghlAccounts") || "[]");
-let activeAccount = "";
+let activeAccount = localStorage.getItem("activeAccount") || "";
 const accDisplay = document.getElementById("activeAccountDisplay");
 const accountsModal = document.getElementById("accountsModal");
 const sourceInfo = document.getElementById("sourceInfo");
@@ -584,42 +623,70 @@ document.getElementById("csvInput").addEventListener("change", async (e)=>{
 });
 
 /* ================= Fetch via backend (API) ================= */
-document.getElementById("fetchContacts").onclick = async ()=>{
+document.getElementById("fetchContacts").onclick = async () => {
   const sel = document.getElementById("accountList");
-  if(!sel.value){ alert("No account selected."); return; }
-  const acc = accounts.find(a=>a.name===sel.value);
-  if(!acc){ alert("Account not found."); return; }
+  if (!sel.value) { 
+    alert("No account selected."); 
+    return; 
+  }
+
+  const acc = accounts.find(a => a.name === sel.value);
+  if (!acc) { 
+    alert("Account not found."); 
+    return; 
+  }
+
   accountsModal.classList.remove("show");
   setStatus("Loading contacts…");
-  try{
+
+  try {
     const response = await fetch("/contacts", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({ apiKey: acc.key })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ apiKey: acc.key })
     });
-    if(!response.ok){
+
+    if (!response.ok) {
       const txt = await response.text();
-      throw new Error(txt||"Failed to fetch");
+      throw new Error(txt || "Failed to fetch");
     }
+
     const data = await response.json();
-    rows = (data.contacts||[]).map(c=>({
-      first: c.firstName||"",
-      last:  c.lastName||"",
-      email: c.email||"",
-      tags: (Array.isArray(c.tags)?c.tags:splitTags(c.tags)).filter(Boolean)
+
+    // 🟠 New safeguard: handle empty or missing contacts
+    if (!data.contacts || !Array.isArray(data.contacts) || !data.contacts.length) {
+      alert("No contacts returned from this account. Please check your API key or account data.");
+      setStatus("No contacts found or invalid response.");
+      return;
+    }
+
+    rows = (data.contacts || []).map(c => ({
+      first: c.firstName || "",
+      last:  c.lastName || "",
+      email: c.email || "",
+      tags: (Array.isArray(c.tags) ? c.tags : splitTags(c.tags)).filter(Boolean)
     }));
-    rows.forEach(r=>{ if(!r.tags.length) r.tags=["No Tags"]; });
+
+    rows.forEach(r => { if (!r.tags.length) r.tags = ["No Tags"]; });
+
     const tagSet = new Set();
-    rows.forEach(r=>r.tags.forEach(t=>tagSet.add(t)));
+    rows.forEach(r => r.tags.forEach(t => tagSet.add(t)));
     allTags = Array.from(tagSet);
-    primarySelected.clear(); secondarySelected.clear();
-    buildBothTagLists(); render();
-    activeAccount = acc.name; saveAccounts();
+
+    primarySelected.clear();
+    secondarySelected.clear();
+    buildBothTagLists();
+    render();
+
+    activeAccount = acc.name;
+    saveAccounts();
+
     sourceInfo.textContent = `Source: GoHighLevel API (account “${activeAccount}”)`;
     document.getElementById("activeAccountDisplay").textContent = `Account: ${activeAccount}`;
     document.getElementById("activeAccountDisplay").classList.remove("inactive");
+
     alert(`Loaded ${rows.length} contacts.`);
-  }catch(err){
+  } catch (err) {
     console.error(err);
     alert("Error fetching contacts");
     setStatus("Error fetching contacts.");
@@ -644,21 +711,30 @@ document.getElementById("clearTable").onclick = () => {
 };
 
 
-/* Init */
-(function init(){
-  renderAccountList(); updateAccountDisplay();
-  const z=localStorage.getItem("zoom");
-  if(z){document.body.style.zoom=z;document.getElementById("compactSlider").value=z;}
+/* ================= Initialise + Event Binding ================= */
+document.addEventListener("DOMContentLoaded", () => {
+
+  // Prevent form submission from reloading the page
+  document.querySelector("form")?.addEventListener("submit", e => e.preventDefault());
+
+  // Standard initialisation
+  renderAccountList();
+  updateAccountDisplay();
+
+  const z = localStorage.getItem("zoom");
+  if (z) {
+    document.body.style.zoom = z;
+    document.getElementById("compactSlider").value = z;
+  }
+
   sourceInfo.textContent = "Source: none loaded";
-})();
-// Save & restore tag-list height
-["primaryTags","secondaryTags"].forEach(id=>{
-  const el = document.getElementById(id);
-  const key = id + "_height";
-  const saved = localStorage.getItem(key);
-  if(saved) el.style.height = saved + "px";
-  el.addEventListener("mouseup", ()=>localStorage.setItem(key, el.offsetHeight));
+
+  // Save & restore tag-list height
+  ["primaryTags", "secondaryTags"].forEach(id => {
+    const el = document.getElementById(id);
+    const key = id + "_height";
+    const saved = localStorage.getItem(key);
+    if (saved) el.style.height = saved + "px";
+    el.addEventListener("mouseup", () => localStorage.setItem(key, el.offsetHeight));
+  });
 });
-</script>
-</body>
-</html>
