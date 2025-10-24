@@ -117,7 +117,7 @@
     <input type="file" id="csvInput" accept=".csv" style="display:none">
 
     <h3>Primary Tags</h3>
-    <input type="text" id="primarySearch" placeholder="Search…" autocomplete="off">
+    <input type="text" id="primarySearch" name="primarySearchField" placeholder="Search…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
     <div class="btn-row" style="gap:16px;margin:8px 0 6px">
       <label><input type="radio" name="logic" value="and" checked> AND</label>
       <label><input type="radio" name="logic" value="or"> OR</label>
@@ -129,7 +129,7 @@
     </div>
 
     <h3>Secondary Tags</h3>
-    <input type="text" id="secondarySearch" placeholder="Search…" autocomplete="off">
+    <input type="text" id="secondarySearch" name="secondarySearchField" placeholder="Search…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
     <div id="secondaryTags" class="tag-list"></div>
     <div class="btn-row" style="margin-top:8px">
       <button id="selectAllSecondary">Select All</button>
