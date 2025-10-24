@@ -224,8 +224,14 @@
     </div>
     <hr style="border:none;border-top:1px solid var(--border);margin:12px 0">
     <h4 style="margin:0 0 8px">Add New Account</h4>
-    <input type="text" id="accountName" placeholder="Account name" style="margin-bottom:8px">
-    <input type="password" id="apiKey" placeholder="API Key" style="margin-bottom:10px">
+    <input type="text" id="accountName" name="accountNameField" placeholder="Account name"
+      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+      style="margin-bottom:8px">
+
+    <input type="password" id="apiKey" name="apiKeyField" placeholder="API Key"
+      autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false"
+      style="margin-bottom:10px">
+
     <div class="modal-actions" style="margin-bottom:14px">
       <button id="saveAccount">Save Account</button>
     </div>
@@ -343,31 +349,47 @@ function render(){
   setStatus(`${filtered.length} contact(s) shown.`);
 }
 
-function buildTagList(containerId, set, searchId){
+function buildTagList(containerId, set, searchId, tagSource) {
   const div = document.getElementById(containerId);
   const q = document.getElementById(searchId).value.toLowerCase();
   const prevScroll = div.scrollTop;
   div.innerHTML = "";
-  const list = sortedTagListFrom(allTags).filter(t=>t.toLowerCase().includes(q));
-  list.forEach(t=>{
+
+  // Use the provided list if given, otherwise use allTags
+  const source = tagSource || allTags;
+  const list = sortedTagListFrom(source).filter(t => t.toLowerCase().includes(q));
+
+  list.forEach(t => {
     const l = document.createElement("label");
     const cb = document.createElement("input");
-    cb.type="checkbox"; cb.value=t; cb.checked = set.has(t);
-    cb.onchange = e=>{
+    cb.type = "checkbox";
+    cb.value = t;
+    cb.checked = set.has(t);
+    cb.onchange = e => {
       e.target.checked ? set.add(t) : set.delete(t);
-      applyNoTagsGreying(); render();
+      applyNoTagsGreying();
+      render();
     };
     l.appendChild(cb);
-    l.append(" "+t);
+    l.append(" " + t);
     div.appendChild(l);
   });
+
   div.scrollTop = prevScroll;
 }
-function buildBothTagLists(){
+
+function buildBothTagLists() {
+  // Primary list: show all tags including "No Tags"
   buildTagList("primaryTags", primarySelected, "primarySearchBox");
-  buildTagList("secondaryTags", secondarySelected, "secondarySearchBox");
+
+  // Secondary list: exclude "No Tags"
+  const tagsWithoutNoTags = allTags.filter(t => t !== "No Tags");
+  buildTagList("secondaryTags", secondarySelected, "secondarySearchBox", tagsWithoutNoTags);
+
   applyNoTagsGreying();
 }
+
+
 
 /* “No Tags” greying per group (AND only), keeping the No Tags box active */
 function greyWithinGroup(containerId, grey){
@@ -378,13 +400,15 @@ function greyWithinGroup(containerId, grey){
     if(v !== "No Tags"){ l.classList.toggle("label-disabled", grey); }
     else { l.classList.remove("label-disabled"); }
   });
-}
-function applyNoTagsGreying(){
-  const greyPrimary = (logicMode==="and" && primarySelected.has("No Tags"));
-  const greySecondary = (logicMode==="and" && secondarySelected.has("No Tags"));
+function applyNoTagsGreying() {
+  const greyPrimary = logicMode === "and" && primarySelected.has("No Tags");
+  const greySecondary = logicMode === "and" && secondarySelected.has("No Tags");
+
+  // Grey out everything except "No Tags" within each list
   greyWithinGroup("primaryTags", greyPrimary);
   greyWithinGroup("secondaryTags", greySecondary);
 }
+
 
 /* Select / Deselect obeying current search */
 function filteredTagNames(searchInputId){
@@ -393,28 +417,33 @@ function filteredTagNames(searchInputId){
 }
 
 document.getElementById("selectAllPrimary").onclick = () => {
-  filteredTagNames("primarySearchBox").forEach(t => primarySelected.add(t));
-  buildBothTagLists();
-  render();
+  filteredTagNames("primarySearchBox")
+    .filter(t => t !== "No Tags")
+    .forEach(t => primarySelected.add(t));
+  buildBothTagLists(); render();
 };
 
 document.getElementById("deselectAllPrimary").onclick = () => {
-  filteredTagNames("primarySearchBox").forEach(t => primarySelected.delete(t));
-  buildBothTagLists();
-  render();
+  filteredTagNames("primarySearchBox")
+    .filter(t => t !== "No Tags")
+    .forEach(t => primarySelected.delete(t));
+  buildBothTagLists(); render();
 };
 
 document.getElementById("selectAllSecondary").onclick = () => {
-  filteredTagNames("secondarySearchBox").forEach(t => secondarySelected.add(t));
-  buildBothTagLists();
-  render();
+  filteredTagNames("secondarySearchBox")
+    .filter(t => t !== "No Tags")
+    .forEach(t => secondarySelected.add(t));
+  buildBothTagLists(); render();
 };
 
 document.getElementById("deselectAllSecondary").onclick = () => {
-  filteredTagNames("secondarySearchBox").forEach(t => secondarySelected.delete(t));
-  buildBothTagLists();
-  render();
+  filteredTagNames("secondarySearchBox")
+    .filter(t => t !== "No Tags")
+    .forEach(t => secondarySelected.delete(t));
+  buildBothTagLists(); render();
 };
+
 
 
 /* Searches + AND/OR */
