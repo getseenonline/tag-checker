@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="autocomplete" content="off">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
@@ -120,12 +121,15 @@
 
 <main>
   <aside>
-    <div class="btn-row">
-      <button id="manageAccounts">Manage Accounts</button>
-      <button id="uploadCsvBtn">Upload CSV</button>
-    </div>
-    <div class="muted" id="sourceInfo" style="margin-top:6px"></div>
-    <input type="file" id="csvInput" accept=".csv" style="display:none">
+    <form autocomplete="off">
+      <div class="btn-row">
+        <button id="manageAccounts" type="button">Manage Accounts</button>
+        <button id="uploadCsvBtn" type="button">Upload CSV</button>
+      </div>
+
+      <div class="muted" id="sourceInfo" style="margin-top:6px"></div>
+      <input type="file" id="csvInput" accept=".csv" style="display:none">
+
 
     <h3>Primary Tags</h3>
     <input
@@ -138,6 +142,16 @@
       autocapitalize="off"
       spellcheck="false"
     />
+    <div class="btn-row" style="gap:16px;margin:8px 0 6px">
+      <label><input type="radio" name="logic" value="and" checked> AND</label>
+      <label><input type="radio" name="logic" value="or"> OR</label>
+    </div>
+
+    <div id="primaryTags" class="tag-list"></div>
+    <div class="btn-row" style="margin-top:8px">
+      <button id="selectAllPrimary">Select All</button>
+      <button id="deselectAllPrimary">Deselect All</button>
+    </div>
 
     <h3>Secondary Tags</h3>
     <input
@@ -150,7 +164,6 @@
       autocapitalize="off"
       spellcheck="false"
     />
-
     <div id="secondaryTags" class="tag-list"></div>
     <div class="btn-row" style="margin-top:8px">
       <button id="selectAllSecondary">Select All</button>
@@ -158,14 +171,17 @@
     </div>
 
 
+
     <h3>Display size</h3>
     <input id="compactSlider" class="slider" type="range" min="0.85" max="1.15" step="0.01" value="1">
 
     <div class="bottom-actions">
-      <button id="topTags">Top Tags</button>
+      <button id="topTags" type="button">Top Tags</button>
       <footer class="sidebar-footer">Tag Checker v2.6 — By Get Seen Online</footer>
     </div>
-  </aside>
+  </form>
+</aside>
+
 
   <section>
     <div id="activeAccountDisplay" class="inactive">Account: None selected</div>
@@ -348,8 +364,8 @@ function buildTagList(containerId, set, searchId){
   div.scrollTop = prevScroll;
 }
 function buildBothTagLists(){
-  buildTagList("primaryTags", primarySelected, "primarySearch");
-  buildTagList("secondaryTags", secondarySelected, "secondarySearch");
+  buildTagList("primaryTags", primarySelected, "primarySearchBox");
+  buildTagList("secondaryTags", secondarySelected, "secondarySearchBox");
   applyNoTagsGreying();
 }
 
@@ -373,28 +389,37 @@ function applyNoTagsGreying(){
 /* Select / Deselect obeying current search */
 function filteredTagNames(searchInputId){
   const q = document.getElementById(searchInputId).value.toLowerCase();
-  return sortedTagListFrom(allTags).filter(t=>t.toLowerCase().includes(q));
+  return sortedTagListFrom(allTags).filter(t => t.toLowerCase().includes(q));
 }
-document.getElementById("selectAllPrimary").onclick=()=>{
-  filteredTagNames("primarySearch").forEach(t=>primarySelected.add(t));
-  buildBothTagLists(); render();
-};
-document.getElementById("deselectAllPrimary").onclick=()=>{
-  filteredTagNames("primarySearch").forEach(t=>primarySelected.delete(t));
-  buildBothTagLists(); render();
-};
-document.getElementById("selectAllSecondary").onclick=()=>{
-  filteredTagNames("secondarySearch").forEach(t=>secondarySelected.add(t));
-  buildBothTagLists(); render();
-};
-document.getElementById("deselectAllSecondary").onclick=()=>{
-  filteredTagNames("secondarySearch").forEach(t=>secondarySelected.delete(t));
-  buildBothTagLists(); render();
+
+document.getElementById("selectAllPrimary").onclick = () => {
+  filteredTagNames("primarySearchBox").forEach(t => primarySelected.add(t));
+  buildBothTagLists();
+  render();
 };
 
+document.getElementById("deselectAllPrimary").onclick = () => {
+  filteredTagNames("primarySearchBox").forEach(t => primarySelected.delete(t));
+  buildBothTagLists();
+  render();
+};
+
+document.getElementById("selectAllSecondary").onclick = () => {
+  filteredTagNames("secondarySearchBox").forEach(t => secondarySelected.add(t));
+  buildBothTagLists();
+  render();
+};
+
+document.getElementById("deselectAllSecondary").onclick = () => {
+  filteredTagNames("secondarySearchBox").forEach(t => secondarySelected.delete(t));
+  buildBothTagLists();
+  render();
+};
+
+
 /* Searches + AND/OR */
-document.getElementById("primarySearch").oninput = buildBothTagLists;
-document.getElementById("secondarySearch").oninput = buildBothTagLists;
+document.getElementById("primarySearchBox").oninput = buildBothTagLists;
+document.getElementById("secondarySearchBox").oninput = buildBothTagLists;
 document.getElementsByName("logic").forEach(r=>r.onchange = e=>{
   logicMode=e.target.value; applyNoTagsGreying(); render();
 });
