@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <title>Tag Checker v2.6 — By Get Seen Online</title>
 <style>
   :root{
@@ -39,14 +41,26 @@
   input[type=text],input[type=password]{width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;background:#fff}
 
   .tag-list{
-    max-height:260px;overflow:auto;background:#fff;border:1px solid var(--border);
-    border-radius:10px;padding:8px
+    min-height:160px;
+    max-height:600px;       /* gives more room if they expand */
+    overflow:auto;
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:8px;
+    resize: vertical;        /* 🟠 allows manual drag to resize */
   }
+
+  #primaryTags,
+  #secondaryTags {
+    margin-bottom: 8px;
+  }
+
   .tag-list label{display:block;padding:4px 0}
   .label-disabled{opacity:.4;pointer-events:none}
 
   input[type="radio"]{accent-color:var(--accent)}
-  .slider{width:100%;appearance:none;height:6px;border-radius:999px;background:#ffd199;outline:none}
+  .slider{width:100%;appearance:none;height:6px;border-radius:999px;background:#ffd199;outline:none;margin-bottom:12px}
   .slider::-webkit-slider-thumb{
     -webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);
     border:2px solid #fff;margin-top:-6px;box-shadow:0 0 0 2px #ffd199
@@ -71,10 +85,18 @@
   #activeAccountDisplay{font-weight:600;color:var(--brand);font-size:1.05em;margin-bottom:6px}
   #activeAccountDisplay.inactive{color:#888;font-style:italic}
 
+  #clearTable {
+    background:#b64a4a;
+    box-shadow:0 4px 10px rgba(182,74,74,.3);
+  }
+  #clearTable:hover {
+    filter:brightness(1.1);
+  }
+
   .sidebar-footer{text-align:center;color:#999;font-size:.9em;padding:12px 8px 14px;border-top:1px solid var(--border);margin-top:16px}
   .muted{opacity:.7}
 
-  .bottom-actions{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+  .bottom-actions{margin-top:auto;display:flex;flex-direction:column;gap:16px;padding-top:8px}
 </style>
 </head>
 <body>
@@ -95,7 +117,7 @@
     <input type="file" id="csvInput" accept=".csv" style="display:none">
 
     <h3>Primary Tags</h3>
-    <input type="text" id="primarySearch" placeholder="Search…">
+    <input type="text" id="primarySearch" placeholder="Search…" autocomplete="off">
     <div class="btn-row" style="gap:16px;margin:8px 0 6px">
       <label><input type="radio" name="logic" value="and" checked> AND</label>
       <label><input type="radio" name="logic" value="or"> OR</label>
@@ -107,7 +129,7 @@
     </div>
 
     <h3>Secondary Tags</h3>
-    <input type="text" id="secondarySearch" placeholder="Search…">
+    <input type="text" id="secondarySearch" placeholder="Search…" autocomplete="off">
     <div id="secondaryTags" class="tag-list"></div>
     <div class="btn-row" style="margin-top:8px">
       <button id="selectAllSecondary">Select All</button>
@@ -172,8 +194,10 @@
     <hr style="border:none;border-top:1px solid var(--border);margin:12px 0">
     <div class="modal-actions">
       <button id="fetchContacts" disabled>Get Data from GHL</button>
+      <button id="clearTable">Clear Table</button>
       <button id="closeAccounts">Close</button>
     </div>
+
   </div>
 </div>
 
@@ -526,6 +550,24 @@ document.getElementById("fetchContacts").onclick = async ()=>{
   }
 };
 
+/* ================= Clear Table Button ================= */
+document.getElementById("clearTable").onclick = () => {
+  if (!confirm("Are you sure you want to clear the table?\n\nThis will remove all displayed contacts and tags but will not delete any saved accounts.")) return;
+
+  rows = [];
+  allTags = [];
+  primarySelected.clear();
+  secondarySelected.clear();
+  buildBothTagLists();
+  render();
+
+  sourceInfo.textContent = "Source: none loaded";
+  activeAccount = "";
+  updateAccountDisplay();
+  setStatus("Table cleared.");
+};
+
+
 /* Init */
 (function init(){
   renderAccountList(); updateAccountDisplay();
@@ -533,6 +575,14 @@ document.getElementById("fetchContacts").onclick = async ()=>{
   if(z){document.body.style.zoom=z;document.getElementById("compactSlider").value=z;}
   sourceInfo.textContent = "Source: none loaded";
 })();
+// Save & restore tag-list height
+["primaryTags","secondaryTags"].forEach(id=>{
+  const el = document.getElementById(id);
+  const key = id + "_height";
+  const saved = localStorage.getItem(key);
+  if(saved) el.style.height = saved + "px";
+  el.addEventListener("mouseup", ()=>localStorage.setItem(key, el.offsetHeight));
+});
 </script>
 </body>
 </html>
