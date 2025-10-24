@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tag Checker v2.4 — By Get Seen Online</title>
+<title>Tag Checker v2.6 — By Get Seen Online</title>
 <style>
   :root{
     --brand:#0E1A40;
@@ -12,95 +12,68 @@
     --border:#dce1eb;
   }
 
-  body{
-    margin:0;
-    font-family:"Segoe UI", Roboto, system-ui, Arial, sans-serif;
-    color:var(--brand);
-    background:var(--bg);
-  }
-
-  /* Header */
-  header{
-    display:flex;align-items:center;justify-content:space-between;
-    padding:12px 20px;background:#f5f6fa;border-bottom:1px solid var(--border);
-  }
+  body{margin:0;font-family:"Segoe UI", Roboto, system-ui, Arial, sans-serif;color:var(--brand);background:var(--bg)}
+  header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#f5f6fa;border-bottom:1px solid var(--border)}
   header img{height:40px}
 
-  /* Layout */
   main{display:flex;height:calc(100vh - 70px)}
   aside{
-    flex-shrink:0;
-    width:350px;min-width:260px;max-width:400px;
-    background:#eef1f7;padding:16px;border-right:1px solid var(--border);
-    overflow-y:auto;resize:horizontal;
-    display:flex;flex-direction:column;
+    flex-shrink:0;width:350px;min-width:260px;max-width:400px;background:#eef1f7;
+    padding:16px;border-right:1px solid var(--border);overflow-y:auto;resize:horizontal;display:flex;flex-direction:column;position:relative
   }
   @media(max-width:1100px){aside{width:300px}}
   @media(max-width:800px){aside{width:260px}}
 
   section{flex:1;padding:16px;overflow:auto;display:flex;flex-direction:column}
 
-  /* Buttons */
   button{
-    background:var(--brand);color:#fff;border:0;border-radius:8px;
-    padding:8px 14px;cursor:pointer;font-weight:600;
+    background:var(--brand);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:600
   }
-  button:disabled{opacity:.45;cursor:not-allowed;filter:none}
+  button:disabled{opacity:.45;cursor:not-allowed}
   button:hover:not(:disabled){filter:brightness(1.08)}
-  #manageAccounts{box-shadow:0 6px 16px rgba(0,0,0,.22)} /* only this one has shadow */
+  #manageAccounts,#uploadCsvBtn{box-shadow:0 6px 16px rgba(0,0,0,.22)}
   .btn-row{display:flex;gap:10px;flex-wrap:wrap}
 
   h3{margin:16px 0 8px}
+  input[type=text],input[type=password]{width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;background:#fff}
 
-  input[type=text],input[type=password]{
-    width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;background:#fff;
-  }
-
-  /* Tag lists */
   .tag-list{
     max-height:260px;overflow:auto;background:#fff;border:1px solid var(--border);
-    border-radius:10px;padding:8px;
+    border-radius:10px;padding:8px
   }
   .tag-list label{display:block;padding:4px 0}
-  .disabled-area{opacity:0.4;pointer-events:none}
+  .label-disabled{opacity:.4;pointer-events:none}
 
-  /* AND/OR + slider */
   input[type="radio"]{accent-color:var(--accent)}
-  .slider{
-    width:100%;appearance:none;height:6px;border-radius:999px;background:#ffd199;outline:none;
-  }
+  .slider{width:100%;appearance:none;height:6px;border-radius:999px;background:#ffd199;outline:none}
   .slider::-webkit-slider-thumb{
-    -webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;
-    background:var(--accent);border:2px solid #fff;margin-top:-6px;box-shadow:0 0 0 2px #ffd199;
+    -webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);
+    border:2px solid #fff;margin-top:-6px;box-shadow:0 0 0 2px #ffd199
   }
-  .slider::-moz-range-thumb{
-    width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid #fff;
-  }
+  .slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid #fff}
 
-  /* Table */
   table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden}
   thead th{position:relative;background:var(--brand);color:#fff;padding:10px;user-select:none}
   tbody td{border-top:1px solid #eee;padding:10px;vertical-align:top}
+  tbody tr:nth-child(odd){background:#fafbff}
   .tag{display:inline-block;margin:2px 6px 2px 0;padding:4px 8px;border-radius:999px;background:#eef2ff;color:var(--brand);border:1px solid #d7def6;font-size:12px}
   .col-resizer{position:absolute;top:0;right:0;width:6px;height:100%;cursor:col-resize;user-select:none}
 
-  /* Modals */
   .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:100}
   .modal.show{display:flex}
   .modal-content{
     background:#fff;border-radius:12px;padding:18px 18px 20px;width:92%;max-width:520px;
-    box-shadow:0 22px 55px rgba(0,0,0,.35);border:1px solid var(--border);
+    box-shadow:0 22px 55px rgba(0,0,0,.35);border:1px solid var(--border)
   }
   .modal-actions{display:flex;gap:10px;flex-wrap:wrap}
 
-  /* Account display above table */
   #activeAccountDisplay{font-weight:600;color:var(--brand);font-size:1.05em;margin-bottom:6px}
   #activeAccountDisplay.inactive{color:#888;font-style:italic}
 
-  /* Sidebar footer (scrolls with content) */
-  .sidebar-footer{
-    text-align:center;color:#999;font-size:.9em;padding:12px 8px 14px;border-top:1px solid var(--border);margin-top:16px;
-  }
+  .sidebar-footer{text-align:center;color:#999;font-size:.9em;padding:12px 8px 14px;border-top:1px solid var(--border);margin-top:16px}
+  .muted{opacity:.7}
+
+  .bottom-actions{margin-top:auto;display:flex;flex-direction:column;gap:10px}
 </style>
 </head>
 <body>
@@ -115,8 +88,10 @@
   <aside>
     <div class="btn-row">
       <button id="manageAccounts">Manage Accounts</button>
-      <button id="topTags">Top Tags</button>
+      <button id="uploadCsvBtn">Upload CSV</button>
     </div>
+    <div class="muted" id="sourceInfo" style="margin-top:6px"></div>
+    <input type="file" id="csvInput" accept=".csv" style="display:none">
 
     <h3>Primary Tags</h3>
     <input type="text" id="primarySearch" placeholder="Search…">
@@ -141,7 +116,10 @@
     <h3>Display size</h3>
     <input id="compactSlider" class="slider" type="range" min="0.85" max="1.15" step="0.01" value="1">
 
-    <footer class="sidebar-footer">Tag Checker v2.4 — By Get Seen Online</footer>
+    <div class="bottom-actions">
+      <button id="topTags">Top Tags</button>
+      <footer class="sidebar-footer">Tag Checker v2.6 — By Get Seen Online</footer>
+    </div>
   </aside>
 
   <section>
@@ -177,27 +155,20 @@
 <div class="modal" id="accountsModal">
   <div class="modal-content">
     <h3>Manage Accounts</h3>
-
     <label for="accountList">Select account:</label>
     <select id="accountList" style="width:100%;margin:6px 0 10px;height:36px;border:1px solid var(--border);border-radius:8px;"></select>
-
     <div class="modal-actions" style="margin-bottom:14px">
       <button id="editAccount">Edit Name</button>
       <button id="deleteAccount">Delete</button>
     </div>
-
     <hr style="border:none;border-top:1px solid var(--border);margin:12px 0">
-
     <h4 style="margin:0 0 8px">Add New Account</h4>
     <input type="text" id="accountName" placeholder="Account name" style="margin-bottom:8px">
     <input type="password" id="apiKey" placeholder="API Key" style="margin-bottom:10px">
-
     <div class="modal-actions" style="margin-bottom:14px">
       <button id="saveAccount">Save Account</button>
     </div>
-
     <hr style="border:none;border-top:1px solid var(--border);margin:12px 0">
-
     <div class="modal-actions">
       <button id="fetchContacts" disabled>Get Data from GHL</button>
       <button id="closeAccounts">Close</button>
@@ -206,26 +177,80 @@
 </div>
 
 <script>
-/* =========================
-   State / Utilities
-========================= */
+/* ================= State / Utilities ================= */
 let rows = [];
 let allTags = [];
 const primarySelected = new Set();
 const secondarySelected = new Set();
 let logicMode = "and";
+let lastCsvName = "";
 
 const splitTags = s => (s||"").split(",").map(t=>t.trim()).filter(Boolean);
 function setStatus(msg){ document.getElementById("status").textContent = msg; }
+const byAlpha = (a,b)=>a.localeCompare(b);
 
-/* Helper: build sorted tags with "No Tags" first */
-function sortedTagListFrom(sourceTags){
-  return ["No Tags", ...sourceTags.filter(t=>t!=="No Tags").sort((a,b)=>a.localeCompare(b))];
+function sortedTagListFrom(set){
+  const arr = Array.from(new Set(set));
+  const hasNo = arr.includes("No Tags");
+  const rest = arr.filter(t=>t!=="No Tags").sort(byAlpha);
+  return hasNo ? ["No Tags", ...rest] : rest;
 }
 
-/* =========================
-   Rendering contacts
-========================= */
+/* ============== CSV Parsing (client-side, with quoted fields) ============== */
+function parseCSV(text){
+  const rows = [];
+  let i=0, field="", inside=false, r=[];
+  function pushField(){ r.push(field); field=""; }
+  function pushRow(){ rows.push(r); r=[]; }
+  while(i<text.length){
+    const c=text[i];
+    if(inside){
+      if(c==='\"'){
+        if(text[i+1]==='\"'){ field+='\"'; i++; }
+        else inside=false;
+      }else field+=c;
+    }else{
+      if(c==='\"'){ inside=true; }
+      else if(c===','){ pushField(); }
+      else if(c==='\n' || c==='\r'){
+        if(c==='\r' && text[i+1]==='\n') i++;
+        pushField(); pushRow();
+      }else field+=c;
+    }
+    i++;
+  }
+  pushField();
+  if(r.length>1 || r[0]!=="" ) pushRow();
+  return rows;
+}
+
+function csvToContacts(csvText){
+  const matrix = parseCSV(csvText);
+  if(matrix.length===0) return [];
+  const header = matrix[0].map(h=>h.trim().toLowerCase());
+  const idx = {
+    first: header.indexOf("first name"),
+    last : header.indexOf("last name"),
+    email: header.indexOf("email"),
+    tags : header.indexOf("tags")
+  };
+  if(idx.first<0 || idx.last<0 || idx.email<0 || idx.tags<0){
+    throw new Error("CSV must include headers: First Name, Last Name, Email, Tags");
+  }
+  const out=[];
+  for(let r=1;r<matrix.length;r++){
+    const row = matrix[r];
+    if(!row.length) continue;
+    const first=(row[idx.first]||"").trim();
+    const last =(row[idx.last]||"").trim();
+    const email=(row[idx.email]||"").trim();
+    const tags=splitTags(row[idx.tags]||"");
+    out.push({first,last,email,tags});
+  }
+  return out;
+}
+
+/* ================= Rendering ================= */
 function render(){
   const filtered = rows.filter(r=>{
     const tags = r.tags.length ? r.tags : ["No Tags"];
@@ -237,7 +262,6 @@ function render(){
         ? prim.every(t=>tags.includes(t))
         : prim.some(t=>tags.includes(t))
     );
-
     const secondaryOK = !sec.length || sec.some(t=>tags.includes(t));
     return primaryOK && secondaryOK;
   });
@@ -256,93 +280,81 @@ function render(){
   setStatus(`${filtered.length} contact(s) shown.`);
 }
 
-/* =========================
-   Tag lists (with No Tags first)
-========================= */
-function buildTagLists(){
-  const makeList = (id, set, searchId)=>{
-    const div = document.getElementById(id);
-    const q = document.getElementById(searchId).value.toLowerCase();
-    div.innerHTML = "";
-
-    const sortedTags = sortedTagListFrom(allTags);
-
-    sortedTags
-      .filter(t=>t.toLowerCase().includes(q))
-      .forEach(t=>{
-        const l = document.createElement("label");
-        const cb = document.createElement("input");
-        cb.type="checkbox"; cb.value=t;
-        cb.checked = set.has(t);
-        cb.onchange = e=>{
-          e.target.checked ? set.add(t) : set.delete(t);
-          handleNoTagsInteraction();
-          render();
-        };
-        l.appendChild(cb);
-        l.append(" "+t);
-        div.appendChild(l);
-      });
-  };
-  makeList("primaryTags",primarySelected,"primarySearch");
-  makeList("secondaryTags",secondarySelected,"secondarySearch");
-  handleNoTagsInteraction();
+function buildTagList(containerId, set, searchId){
+  const div = document.getElementById(containerId);
+  const q = document.getElementById(searchId).value.toLowerCase();
+  const prevScroll = div.scrollTop;
+  div.innerHTML = "";
+  const list = sortedTagListFrom(allTags).filter(t=>t.toLowerCase().includes(q));
+  list.forEach(t=>{
+    const l = document.createElement("label");
+    const cb = document.createElement("input");
+    cb.type="checkbox"; cb.value=t; cb.checked = set.has(t);
+    cb.onchange = e=>{
+      e.target.checked ? set.add(t) : set.delete(t);
+      applyNoTagsGreying(); render();
+    };
+    l.appendChild(cb);
+    l.append(" "+t);
+    div.appendChild(l);
+  });
+  div.scrollTop = prevScroll;
+}
+function buildBothTagLists(){
+  buildTagList("primaryTags", primarySelected, "primarySearch");
+  buildTagList("secondaryTags", secondarySelected, "secondarySearch");
+  applyNoTagsGreying();
 }
 
-/* Grey out behaviour when No Tags + AND (greys out BOTH lists) */
-function handleNoTagsInteraction(){
-  const noTagsChosen = (primarySelected.has("No Tags") || secondarySelected.has("No Tags"));
-  const shouldGrey = (logicMode === "and" && noTagsChosen);
-
-  const grey = (id, dis) => {
-    const list = document.getElementById(id);
-    if (!list) return;
-    if (dis) list.classList.add("disabled-area");
-    else list.classList.remove("disabled-area");
-  };
-
-  grey("primaryTags", shouldGrey);
-  grey("secondaryTags", shouldGrey);
+/* “No Tags” greying per group (AND only), keeping the No Tags box active */
+function greyWithinGroup(containerId, grey){
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  [...container.querySelectorAll("label")].forEach(l=>{
+    const v = l.querySelector("input")?.value || "";
+    if(v !== "No Tags"){ l.classList.toggle("label-disabled", grey); }
+    else { l.classList.remove("label-disabled"); }
+  });
+}
+function applyNoTagsGreying(){
+  const greyPrimary = (logicMode==="and" && primarySelected.has("No Tags"));
+  const greySecondary = (logicMode==="and" && secondarySelected.has("No Tags"));
+  greyWithinGroup("primaryTags", greyPrimary);
+  greyWithinGroup("secondaryTags", greySecondary);
 }
 
-/* =========================
-   Select/Deselect helpers that obey current search filter
-========================= */
-function filteredTagNames(listId, searchInputId){
+/* Select / Deselect obeying current search */
+function filteredTagNames(searchInputId){
   const q = document.getElementById(searchInputId).value.toLowerCase();
   return sortedTagListFrom(allTags).filter(t=>t.toLowerCase().includes(q));
 }
-
 document.getElementById("selectAllPrimary").onclick=()=>{
-  filteredTagNames("primaryTags","primarySearch").forEach(t=>primarySelected.add(t));
-  buildTagLists();render();
+  filteredTagNames("primarySearch").forEach(t=>primarySelected.add(t));
+  buildBothTagLists(); render();
 };
 document.getElementById("deselectAllPrimary").onclick=()=>{
-  filteredTagNames("primaryTags","primarySearch").forEach(t=>primarySelected.delete(t));
-  buildTagLists();render();
+  filteredTagNames("primarySearch").forEach(t=>primarySelected.delete(t));
+  buildBothTagLists(); render();
 };
 document.getElementById("selectAllSecondary").onclick=()=>{
-  filteredTagNames("secondaryTags","secondarySearch").forEach(t=>secondarySelected.add(t));
-  buildTagLists();render();
+  filteredTagNames("secondarySearch").forEach(t=>secondarySelected.add(t));
+  buildBothTagLists(); render();
 };
 document.getElementById("deselectAllSecondary").onclick=()=>{
-  filteredTagNames("secondaryTags","secondarySearch").forEach(t=>secondarySelected.delete(t));
-  buildTagLists();render();
+  filteredTagNames("secondarySearch").forEach(t=>secondarySelected.delete(t));
+  buildBothTagLists(); render();
 };
 
-/* Search + AND/OR */
-document.getElementById("primarySearch").oninput = buildTagLists;
-document.getElementById("secondarySearch").oninput = buildTagLists;
+/* Searches + AND/OR */
+document.getElementById("primarySearch").oninput = buildBothTagLists;
+document.getElementById("secondarySearch").oninput = buildBothTagLists;
 document.getElementsByName("logic").forEach(r=>r.onchange = e=>{
-  logicMode=e.target.value;
-  handleNoTagsInteraction();
-  render();
+  logicMode=e.target.value; applyNoTagsGreying(); render();
 });
 
-/* Display size slider (remembers) */
+/* Display size slider (memory) */
 document.getElementById("compactSlider").oninput = e=>{
-  document.body.style.zoom=e.target.value;
-  localStorage.setItem("zoom",e.target.value);
+  document.body.style.zoom=e.target.value; localStorage.setItem("zoom",e.target.value);
 };
 (function(){const z=localStorage.getItem("zoom");if(z){document.body.style.zoom=z;document.getElementById("compactSlider").value=z;}})();
 
@@ -351,8 +363,7 @@ document.getElementById("topTags").onclick=()=>{
   const map=new Map();
   rows.forEach(r=>r.tags.forEach(t=>map.set(t,(map.get(t)||0)+1)));
   const list=[...map.entries()].sort((a,b)=>b[1]-a[1]).slice(0,20);
-  const ol=document.getElementById("topTagsList");
-  ol.innerHTML=list.map(([t,c])=>`<li>${t} (${c})</li>`).join("");
+  document.getElementById("topTagsList").innerHTML = list.map(([t,c])=>`<li>${t} (${c})</li>`).join("");
   document.getElementById("topTagsModal").classList.add("show");
 };
 document.getElementById("closeTopTags").onclick=()=>document.getElementById("topTagsModal").classList.remove("show");
@@ -362,7 +373,7 @@ document.querySelectorAll("th").forEach(th=>{
   const handle=th.querySelector(".col-resizer");
   let startX,startW;
   handle.onmousedown=e=>{
-    startX=e.pageX;startW=th.offsetWidth;
+    startX=e.pageX; startW=th.offsetWidth;
     document.onmousemove=ev=>{
       const nw=startW+(ev.pageX-startX);
       th.style.width=nw+"px";
@@ -374,69 +385,54 @@ document.querySelectorAll("th").forEach(th=>{
   if(w) th.style.width=w+"px";
 });
 
-/* =========================
-   Accounts modal + storage
-========================= */
+/* ================= Accounts modal + storage ================= */
 let accounts = JSON.parse(localStorage.getItem("ghlAccounts") || "[]");
-let activeAccount = ""; // start blank
+let activeAccount = "";
 const accDisplay = document.getElementById("activeAccountDisplay");
 const accountsModal = document.getElementById("accountsModal");
-
-document.getElementById("manageAccounts").onclick=()=>{renderAccountList();accountsModal.classList.add("show");};
-document.getElementById("closeAccounts").onclick=()=>accountsModal.classList.remove("show");
+const sourceInfo = document.getElementById("sourceInfo");
 
 function saveAccounts(){
   localStorage.setItem("ghlAccounts", JSON.stringify(accounts));
   localStorage.setItem("activeAccount", activeAccount);
-  renderAccountList();
-  updateAccountDisplay();
+  renderAccountList(); updateAccountDisplay();
 }
-
 function renderAccountList(){
   const select = document.getElementById("accountList");
   select.innerHTML = accounts.map(a=>`<option value="${a.name}">${a.name}</option>`).join("");
-  // Do NOT auto-select on load
-  if(activeAccount && accounts.find(a=>a.name===activeAccount)){
-    select.value = activeAccount;
-  }else{
-    select.value = "";
-  }
+  if(activeAccount && accounts.find(a=>a.name===activeAccount)){ select.value = activeAccount; }
+  else { select.value = ""; }
   document.getElementById("fetchContacts").disabled = !select.value;
 }
-
 function updateAccountDisplay(){
   if(activeAccount){accDisplay.textContent=`Account: ${activeAccount}`;accDisplay.classList.remove("inactive");}
   else{accDisplay.textContent="Account: None selected";accDisplay.classList.add("inactive");}
 }
 
+document.getElementById("manageAccounts").onclick=()=>{renderAccountList();accountsModal.classList.add("show");};
+document.getElementById("closeAccounts").onclick=()=>accountsModal.classList.remove("show");
 document.getElementById("accountList").onchange = (e)=>{
   activeAccount = e.target.value || "";
   document.getElementById("fetchContacts").disabled = !activeAccount;
   updateAccountDisplay();
 };
-
 document.getElementById("saveAccount").onclick=()=>{
   const name = document.getElementById("accountName").value.trim();
-  const key = document.getElementById("apiKey").value.trim();
+  const key  = document.getElementById("apiKey").value.trim();
   if(!name || !key){ alert("Please enter account name and API key."); return; }
   if(accounts.find(a=>a.name===name)){ alert("An account with that name already exists."); return; }
   accounts.push({name, key});
-  document.getElementById("accountName").value="";
-  document.getElementById("apiKey").value="";
-  saveAccounts();
-  alert("Account saved. Select it to continue.");
+  document.getElementById("accountName").value=""; document.getElementById("apiKey").value="";
+  saveAccounts(); alert("Account saved. Select it to continue.");
 };
-
 document.getElementById("deleteAccount").onclick=()=>{
   const sel = document.getElementById("accountList");
   if(!sel.value){ alert("No account selected."); return; }
   if(!confirm("Delete this account?")) return;
   accounts = accounts.filter(a=>a.name!==sel.value);
   if(activeAccount===sel.value) activeAccount="";
-  saveAccounts();
-  alert("Deleted.");
+  saveAccounts(); alert("Deleted.");
 };
-
 document.getElementById("editAccount").onclick=()=>{
   const sel = document.getElementById("accountList");
   if(!sel.value){ alert("No account selected."); return; }
@@ -449,20 +445,53 @@ document.getElementById("editAccount").onclick=()=>{
   saveAccounts();
 };
 
-/* =========================
-   Fetch via your backend
-========================= */
+/* ================= CSV Upload (client-side) ================= */
+document.getElementById("uploadCsvBtn").onclick=()=>document.getElementById("csvInput").click();
+document.getElementById("csvInput").addEventListener("change", async (e)=>{
+  const file = e.target.files?.[0];
+  if(!file) return;
+  try{
+    setStatus("Reading CSV…");
+    const text = await file.text();
+    const contacts = csvToContacts(text);
+    if(!contacts.length){ throw new Error("No rows found in CSV."); }
+    rows = contacts.map(c=>({
+      first: c.first || "",
+      last : c.last  || "",
+      email: c.email || "",
+      tags : (Array.isArray(c.tags)?c.tags:splitTags(c.tags||"")).filter(Boolean)
+    }));
+    rows.forEach(r=>{ if(!r.tags.length) r.tags=["No Tags"]; });
+    const tagSet = new Set();
+    rows.forEach(r=>r.tags.forEach(t=>tagSet.add(t)));
+    allTags = Array.from(tagSet);
+    primarySelected.clear(); secondarySelected.clear();
+    buildBothTagLists(); render();
+    lastCsvName = file.name;
+    activeAccount = ""; saveAccounts();
+    sourceInfo.textContent = `Source: CSV (“${lastCsvName}”)`;
+    document.getElementById("activeAccountDisplay").textContent = `Account: CSV file — ${lastCsvName}`;
+    document.getElementById("activeAccountDisplay").classList.remove("inactive");
+    alert(`Loaded ${rows.length} contacts from CSV.`);
+  }catch(err){
+    console.error(err);
+    alert("CSV error: " + err.message);
+    setStatus("CSV error.");
+  }finally{
+    e.target.value = "";
+  }
+});
+
+/* ================= Fetch via backend (API) ================= */
 document.getElementById("fetchContacts").onclick = async ()=>{
   const sel = document.getElementById("accountList");
   if(!sel.value){ alert("No account selected."); return; }
   const acc = accounts.find(a=>a.name===sel.value);
   if(!acc){ alert("Account not found."); return; }
-
   accountsModal.classList.remove("show");
   setStatus("Loading contacts…");
-
   try{
-    const response = await fetch("https://tag-checker.onrender.com/contacts", {
+    const response = await fetch("/contacts", {
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({ apiKey: acc.key })
@@ -472,26 +501,22 @@ document.getElementById("fetchContacts").onclick = async ()=>{
       throw new Error(txt||"Failed to fetch");
     }
     const data = await response.json();
-
     rows = (data.contacts||[]).map(c=>({
       first: c.firstName||"",
       last:  c.lastName||"",
       email: c.email||"",
       tags: (Array.isArray(c.tags)?c.tags:splitTags(c.tags)).filter(Boolean)
     }));
-
-    // Inject "No Tags" where needed
     rows.forEach(r=>{ if(!r.tags.length) r.tags=["No Tags"]; });
-
-    // Build tag set
     const tagSet = new Set();
     rows.forEach(r=>r.tags.forEach(t=>tagSet.add(t)));
-    allTags = [...tagSet];
-
-    buildTagLists();
-    render();
-    activeAccount = acc.name; // set chosen account as active
-    saveAccounts();
+    allTags = Array.from(tagSet);
+    primarySelected.clear(); secondarySelected.clear();
+    buildBothTagLists(); render();
+    activeAccount = acc.name; saveAccounts();
+    sourceInfo.textContent = `Source: GoHighLevel API (account “${activeAccount}”)`;
+    document.getElementById("activeAccountDisplay").textContent = `Account: ${activeAccount}`;
+    document.getElementById("activeAccountDisplay").classList.remove("inactive");
     alert(`Loaded ${rows.length} contacts.`);
   }catch(err){
     console.error(err);
@@ -501,8 +526,12 @@ document.getElementById("fetchContacts").onclick = async ()=>{
 };
 
 /* Init */
-renderAccountList();
-updateAccountDisplay();
+(function init(){
+  renderAccountList(); updateAccountDisplay();
+  const z=localStorage.getItem("zoom");
+  if(z){document.body.style.zoom=z;document.getElementById("compactSlider").value=z;}
+  sourceInfo.textContent = "Source: none loaded";
+})();
 </script>
 </body>
 </html>
