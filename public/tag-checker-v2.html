@@ -532,11 +532,11 @@ const accDisplay = document.getElementById("activeAccountDisplay");
 const accountsModal = document.getElementById("accountsModal");
 const sourceInfo = document.getElementById("sourceInfo");
 
-function saveAccounts(){
-  localStorage.setItem("ghlAccounts", JSON.stringify(accounts));
-  localStorage.setItem("activeAccount", activeAccount);
-  renderAccountList(); updateAccountDisplay();
+function saveAccounts() {
+  localStorage.setItem("accounts", JSON.stringify(accounts));
+  // activeAccount intentionally not saved
 }
+
 function renderAccountList(){
   const select = document.getElementById("accountList");
   select.innerHTML = accounts.map(a=>`<option value="${a.name}">${a.name}</option>`).join("");
