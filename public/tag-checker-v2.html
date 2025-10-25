@@ -3,11 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="autocomplete" content="off">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-<title>Tag Checker v2.6 — By Get Seen Online</title>
+<title>Tag Checker v2.6 - By Get Seen Online</title>
 <style>
   :root{
     --brand:#0E1A40;
@@ -18,6 +17,11 @@
 
   input:-webkit-autofill {
     transition: background-color 9999s ease-in-out 0s;
+  }
+
+  /* Add consistent spacing between button rows and next headers */
+  .btn-row + h3 {
+    margin-top: 16px;
   }
 
   body{margin:0;font-family:"Segoe UI", Roboto, system-ui, Arial, sans-serif;color:var(--brand);background:var(--bg)}
@@ -159,6 +163,10 @@
 <main>
   <aside>
     <form autocomplete="off">
+      <!-- 🧩 Autofill prevention fields -->
+      <input type="text" style="display:none" autocomplete="username">
+      <input type="password" style="display:none" autocomplete="new-password">
+
       <div class="btn-row">
         <button id="manageAccounts" type="button">Manage Accounts</button>
         <button id="uploadCsvBtn" type="button">Upload CSV</button>
@@ -169,6 +177,10 @@
 
 
     <h3>Primary Tags</h3>
+    <div class="btn-row" style="gap:16px;margin:8px 0 6px">
+      <label><input type="radio" name="primaryLogic" value="and" checked> AND</label>
+      <label><input type="radio" name="primaryLogic" value="or"> OR</label>
+    </div>
     <input
       type="search"
       id="primarySearchBox"
@@ -179,10 +191,6 @@
       autocapitalize="off"
       spellcheck="false"
     />
-    <div class="btn-row" style="gap:16px;margin:8px 0 6px">
-      <label><input type="radio" name="logic" value="and" checked> AND</label>
-      <label><input type="radio" name="logic" value="or"> OR</label>
-    </div>
 
     <div id="primaryTags" class="tag-list"></div>
     <div class="btn-row" style="margin-top:8px">
@@ -190,7 +198,11 @@
       <button id="deselectAllPrimary" type="button">Deselect All</button>
     </div>
 
-    <h3>Secondary Tags</h3>
+     <h3>Secondary Tags</h3>
+    <div class="btn-row" style="gap:16px;margin:8px 0 6px">
+      <label><input type="radio" name="secondaryLogic" value="and"> AND</label>
+      <label><input type="radio" name="secondaryLogic" value="or" checked> OR</label>
+    </div>
     <input
       type="search"
       id="secondarySearchBox"
@@ -214,7 +226,7 @@
 
     <div class="bottom-actions">
       <button id="topTags" type="button">Top Tags</button>
-      <footer class="sidebar-footer">Tag Checker v2.6 — By Get Seen Online</footer>
+      <footer class="sidebar-footer">Tag Checker v2.6 - By Get Seen Online</footer>
     </div>
   </form>
 </aside>
@@ -288,7 +300,8 @@ let rows = [];
 let allTags = [];
 const primarySelected = new Set();
 const secondarySelected = new Set();
-let logicMode = "and";
+let primaryLogic = "and";
+let secondaryLogic = "or";
 let lastCsvName = "";
 
 const splitTags = s => (s || "").split(",").map(t => t.trim()).filter(Boolean);
@@ -301,6 +314,33 @@ function sortedTagListFrom(set) {
   const rest = arr.filter(t => t !== "No Tags").sort(byAlpha);
   return hasNo ? ["No Tags", ...rest] : rest;
 }
+
+// ================= Tag Matching Helpers =================
+function matchesGroup(contactTags, selectedSet, mode, allowNoTags) {
+  if (!selectedSet || selectedSet.size === 0) return true;
+
+  const sel = [...selectedSet];
+  const noTagsSelected = allowNoTags && selectedSet.has("No Tags");
+  const other = allowNoTags ? sel.filter(t => t !== "No Tags") : sel;
+
+  if (noTagsSelected && mode === "and") {
+    // AND with "No Tags" and any other tag is impossible.
+    // Only valid case is selecting just "No Tags" in AND.
+    return other.length === 0 ? (contactTags.length === 0) : false;
+  }
+
+  if (noTagsSelected && mode === "or") {
+    const otherHit = other.length ? other.some(t => contactTags.includes(t)) : false;
+    return (contactTags.length === 0) || otherHit;
+  }
+
+  if (mode === "and") {
+    return other.every(t => contactTags.includes(t));
+  } else {
+    return other.some(t => contactTags.includes(t));
+  }
+}
+
 
 /* ============== CSV Parsing (client-side, with quoted fields) ============== */
 function parseCSV(text) {
@@ -357,34 +397,37 @@ function csvToContacts(csvText) {
 }
 
 /* ================= Rendering ================= */
-function render(){
-  const filtered = rows.filter(r=>{
-    const tags = r.tags.length ? r.tags : ["No Tags"];
-    const prim = [...primarySelected];
-    const sec = [...secondarySelected];
+function render() {
+  const filtered = rows.filter(r => {
+    const tags = r.tags && r.tags.length ? r.tags : ["No Tags"];
 
-    const primaryOK = !prim.length || (
-      logicMode === "and"
-        ? prim.every(t=>tags.includes(t))
-        : prim.some(t=>tags.includes(t))
-    );
-    const secondaryOK = !sec.length || sec.some(t=>tags.includes(t));
-    return primaryOK && secondaryOK;
+    // Check each group separately using its own logic mode
+    const passPrimary   = matchesGroup(tags, primarySelected,   primaryLogic,   true);
+    const passSecondary = matchesGroup(tags, secondarySelected, secondaryLogic, false);
+
+    // Both groups must pass
+    return passPrimary && passSecondary;
   });
 
+  // Render table
   const tbody = document.querySelector("#results tbody");
   tbody.innerHTML = "";
-  filtered.forEach(r=>{
+
+  filtered.forEach(r => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${r.first}</td>
       <td>${r.last}</td>
       <td>${r.email}</td>
-      <td>${(r.tags.length?r.tags:["No Tags"]).map(t=>`<span class='tag'>${t}</span>`).join("")}</td>`;
+      <td>${(r.tags.length ? r.tags : ["No Tags"])
+        .map(t => `<span class="tag">${t}</span>`)
+        .join("")}</td>`;
     tbody.appendChild(tr);
   });
+
   setStatus(`${filtered.length} contact(s) shown.`);
 }
+
 
 function buildTagList(containerId, set, searchId, tagSource) {
   const div = document.getElementById(containerId);
@@ -440,13 +483,17 @@ function greyWithinGroup(containerId, grey){
 }
 
 function applyNoTagsGreying() {
-  const greyPrimary = logicMode === "and" && primarySelected.has("No Tags");
-  const greySecondary = logicMode === "and" && secondarySelected.has("No Tags");
+  // "No Tags" only appears in the primary list.
+  // Grey out the primary list if it's in AND mode and "No Tags" is selected.
+  const greyPrimary = primaryLogic === "and" && primarySelected.has("No Tags");
 
-  // Grey out everything except "No Tags" within each list
+  // Apply greying to the primary list only.
   greyWithinGroup("primaryTags", greyPrimary);
-  greyWithinGroup("secondaryTags", greySecondary);
+
+  // Secondary never contains "No Tags", so keep it fully active.
+  greyWithinGroup("secondaryTags", false);
 }
+
 
 
 /* Select / Deselect obeying current search */
@@ -488,9 +535,6 @@ document.getElementById("deselectAllSecondary").onclick = () => {
 /* Searches + AND/OR */
 document.getElementById("primarySearchBox").oninput = buildBothTagLists;
 document.getElementById("secondarySearchBox").oninput = buildBothTagLists;
-document.getElementsByName("logic").forEach(r=>r.onchange = e=>{
-  logicMode=e.target.value; applyNoTagsGreying(); render();
-});
 
 /* Display size slider (memory) */
 document.getElementById("compactSlider").oninput = e=>{
@@ -526,11 +570,16 @@ document.querySelectorAll("th").forEach(th=>{
 });
 
 /* ================= Accounts modal + storage ================= */
-let accounts = JSON.parse(localStorage.getItem("ghlAccounts") || "[]");
-let activeAccount = localStorage.getItem("activeAccount") || "";
+let accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
+
+// Always start with no active account (fresh each load)
+let activeAccount = "";
+localStorage.removeItem("activeAccount"); // clear any old saved value
+
 const accDisplay = document.getElementById("activeAccountDisplay");
 const accountsModal = document.getElementById("accountsModal");
 const sourceInfo = document.getElementById("sourceInfo");
+
 
 function saveAccounts() {
   localStorage.setItem("accounts", JSON.stringify(accounts));
@@ -548,16 +597,20 @@ function updateAccountDisplay() {
   const hasData = Array.isArray(rows) && rows.length > 0;
 
   if (activeAccount && hasData) {
+    // Account loaded successfully
     accDisplay.textContent = `Account: ${activeAccount}`;
     accDisplay.classList.remove("inactive");
   } else if (activeAccount && !hasData) {
+    // Account selected but data not yet fetched
     accDisplay.textContent = `Account: ${activeAccount} (not loaded)`;
     accDisplay.classList.add("inactive");
   } else {
+    // Always show None selected on fresh load
     accDisplay.textContent = "Account: None selected";
     accDisplay.classList.add("inactive");
   }
 }
+
 
 
 document.getElementById("manageAccounts").onclick=()=>{renderAccountList();accountsModal.classList.add("show");};
@@ -574,7 +627,9 @@ document.getElementById("saveAccount").onclick=()=>{
   if(accounts.find(a=>a.name===name)){ alert("An account with that name already exists."); return; }
   accounts.push({name, key});
   document.getElementById("accountName").value=""; document.getElementById("apiKey").value="";
-  saveAccounts(); alert("Account saved. Select it to continue.");
+  saveAccounts();
+  renderAccountList();
+  alert("Account saved. Select it to continue.");
 };
 document.getElementById("deleteAccount").onclick=()=>{
   const sel = document.getElementById("accountList");
@@ -582,7 +637,10 @@ document.getElementById("deleteAccount").onclick=()=>{
   if(!confirm("Delete this account?")) return;
   accounts = accounts.filter(a=>a.name!==sel.value);
   if(activeAccount===sel.value) activeAccount="";
-  saveAccounts(); alert("Deleted.");
+  saveAccounts();
+  renderAccountList();
+  updateAccountDisplay();
+  alert("Deleted.");
 };
 document.getElementById("editAccount").onclick=()=>{
   const sel = document.getElementById("accountList");
@@ -621,7 +679,7 @@ document.getElementById("csvInput").addEventListener("change", async (e)=>{
     lastCsvName = file.name;
     activeAccount = ""; saveAccounts();
     sourceInfo.textContent = `Source: CSV (“${lastCsvName}”)`;
-    document.getElementById("activeAccountDisplay").textContent = `Account: CSV file — ${lastCsvName}`;
+    document.getElementById("activeAccountDisplay").textContent = `Account: CSV file - ${lastCsvName}`;
     document.getElementById("activeAccountDisplay").classList.remove("inactive");
     alert(`Loaded ${rows.length} contacts from CSV.`);
   }catch(err){
@@ -730,6 +788,7 @@ document.querySelector("form")?.addEventListener("submit", e => e.preventDefault
 
 // Standard initialisation
 renderAccountList();
+activeAccount = "";
 updateAccountDisplay();
 
 const z = localStorage.getItem("zoom");
@@ -740,9 +799,23 @@ if (z) {
 
 sourceInfo.textContent = "Source: none loaded";
 
-// 🟢 Always reset active account when Tag Checker loads
-activeAccount = "";
-updateAccountDisplay();
+
+// ================= Logic Toggle Listeners =================
+document.querySelectorAll("input[name='primaryLogic']").forEach(el=>{
+  el.addEventListener("change", e=>{
+    primaryLogic = e.target.value;
+    applyNoTagsGreying();
+    render();
+  });
+});
+document.querySelectorAll("input[name='secondaryLogic']").forEach(el=>{
+  el.addEventListener("change", e=>{
+    secondaryLogic = e.target.value;
+    applyNoTagsGreying();
+    render();
+  });
+});
+
 
 // Save & restore tag-list height
 ["primaryTags", "secondaryTags"].forEach(id => {
@@ -752,6 +825,7 @@ updateAccountDisplay();
   if (saved) el.style.height = saved + "px";
   el.addEventListener("mouseup", () => localStorage.setItem(key, el.offsetHeight));
 });
+
 </script>
 </body>
 </html>
