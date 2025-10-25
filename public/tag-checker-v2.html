@@ -291,67 +291,87 @@ const secondarySelected = new Set();
 let logicMode = "and";
 let lastCsvName = "";
 
-const splitTags = s => (s||"").split(",").map(t=>t.trim()).filter(Boolean);
-function setStatus(msg){ document.getElementById("status").textContent = msg; }
-const byAlpha = (a,b)=>a.localeCompare(b);
+const splitTags = s => (s || "").split(",").map(t => t.trim()).filter(Boolean);
+function setStatus(msg) { document.getElementById("status").textContent = msg; }
+const byAlpha = (a, b) => a.localeCompare(b);
 
-function sortedTagListFrom(set){
+function sortedTagListFrom(set) {
   const arr = Array.from(new Set(set));
   const hasNo = arr.includes("No Tags");
-  const rest = arr.filter(t=>t!=="No Tags").sort(byAlpha);
+  const rest = arr.filter(t => t !== "No Tags").sort(byAlpha);
   return hasNo ? ["No Tags", ...rest] : rest;
 }
 
+/* ================= Core Button Bindings ================= */
+
+// Manage Accounts button — opens the accounts modal
+document.getElementById("manageAccounts").onclick = () => {
+  const modal = document.getElementById("accountsModal");
+  if (modal) modal.classList.add("show");
+};
+
+// Upload CSV button — triggers file input
+document.getElementById("uploadCsvBtn").onclick = () => {
+  const csvInput = document.getElementById("csvInput");
+  if (csvInput) csvInput.click();
+};
+
+// Top Tags button — opens the top tags modal
+document.getElementById("topTags").onclick = () => {
+  const modal = document.getElementById("topTagsModal");
+  if (modal) modal.classList.add("show");
+};
+
 /* ============== CSV Parsing (client-side, with quoted fields) ============== */
-function parseCSV(text){
+function parseCSV(text) {
   const rows = [];
-  let i=0, field="", inside=false, r=[];
-  function pushField(){ r.push(field); field=""; }
-  function pushRow(){ rows.push(r); r=[]; }
-  while(i<text.length){
-    const c=text[i];
-    if(inside){
-      if(c==='\"'){
-        if(text[i+1]==='\"'){ field+='\"'; i++; }
-        else inside=false;
-      }else field+=c;
-    }else{
-      if(c==='\"'){ inside=true; }
-      else if(c===','){ pushField(); }
-      else if(c==='\n' || c==='\r'){
-        if(c==='\r' && text[i+1]==='\n') i++;
+  let i = 0, field = "", inside = false, r = [];
+  function pushField() { r.push(field); field = ""; }
+  function pushRow() { rows.push(r); r = []; }
+  while (i < text.length) {
+    const c = text[i];
+    if (inside) {
+      if (c === '\"') {
+        if (text[i + 1] === '\"') { field += '\"'; i++; }
+        else inside = false;
+      } else field += c;
+    } else {
+      if (c === '\"') { inside = true; }
+      else if (c === ',') { pushField(); }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && text[i + 1] === '\n') i++;
         pushField(); pushRow();
-      }else field+=c;
+      } else field += c;
     }
     i++;
   }
   pushField();
-  if(r.length>1 || r[0]!=="" ) pushRow();
+  if (r.length > 1 || r[0] !== "") pushRow();
   return rows;
 }
 
-function csvToContacts(csvText){
+function csvToContacts(csvText) {
   const matrix = parseCSV(csvText);
-  if(matrix.length===0) return [];
-  const header = matrix[0].map(h=>h.trim().toLowerCase());
+  if (matrix.length === 0) return [];
+  const header = matrix[0].map(h => h.trim().toLowerCase());
   const idx = {
     first: header.indexOf("first name"),
-    last : header.indexOf("last name"),
+    last: header.indexOf("last name"),
     email: header.indexOf("email"),
-    tags : header.indexOf("tags")
+    tags: header.indexOf("tags")
   };
-  if(idx.first<0 || idx.last<0 || idx.email<0 || idx.tags<0){
+  if (idx.first < 0 || idx.last < 0 || idx.email < 0 || idx.tags < 0) {
     throw new Error("CSV must include headers: First Name, Last Name, Email, Tags");
   }
-  const out=[];
-  for(let r=1;r<matrix.length;r++){
+  const out = [];
+  for (let r = 1; r < matrix.length; r++) {
     const row = matrix[r];
-    if(!row.length) continue;
-    const first=(row[idx.first]||"").trim();
-    const last =(row[idx.last]||"").trim();
-    const email=(row[idx.email]||"").trim();
-    const tags=splitTags(row[idx.tags]||"");
-    out.push({first,last,email,tags});
+    if (!row.length) continue;
+    const first = (row[idx.first] || "").trim();
+    const last = (row[idx.last] || "").trim();
+    const email = (row[idx.email] || "").trim();
+    const tags = splitTags(row[idx.tags] || "");
+    out.push({ first, last, email, tags });
   }
   return out;
 }
@@ -736,3 +756,6 @@ sourceInfo.textContent = "Source: none loaded";
   if (saved) el.style.height = saved + "px";
   el.addEventListener("mouseup", () => localStorage.setItem(key, el.offsetHeight));
 });
+</script>
+</body>
+</html>
