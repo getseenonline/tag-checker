@@ -544,10 +544,21 @@ function renderAccountList(){
   else { select.value = ""; }
   document.getElementById("fetchContacts").disabled = !select.value;
 }
-function updateAccountDisplay(){
-  if(activeAccount){accDisplay.textContent=`Account: ${activeAccount}`;accDisplay.classList.remove("inactive");}
-  else{accDisplay.textContent="Account: None selected";accDisplay.classList.add("inactive");}
+function updateAccountDisplay() {
+  const hasData = Array.isArray(rows) && rows.length > 0;
+
+  if (activeAccount && hasData) {
+    accDisplay.textContent = `Account: ${activeAccount}`;
+    accDisplay.classList.remove("inactive");
+  } else if (activeAccount && !hasData) {
+    accDisplay.textContent = `Account: ${activeAccount} (not loaded)`;
+    accDisplay.classList.add("inactive");
+  } else {
+    accDisplay.textContent = "Account: None selected";
+    accDisplay.classList.add("inactive");
+  }
 }
+
 
 document.getElementById("manageAccounts").onclick=()=>{renderAccountList();accountsModal.classList.add("show");};
 document.getElementById("closeAccounts").onclick=()=>accountsModal.classList.remove("show");
