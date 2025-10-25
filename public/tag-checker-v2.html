@@ -402,14 +402,21 @@ function csvToContacts(csvText) {
 /* ================= Rendering ================= */
 function render() {
   const filtered = rows.filter(r => {
-    const tags = r.tags && r.tags.length ? r.tags : ["No Tags"];
+    const hasTags = r.tags && r.tags.length > 0;
+    const tags = hasTags ? r.tags : [];
 
-    // Check each group separately using its own logic mode
+    // Handle “No Tags” logic separately
+    const wantsNoTags =
+      primarySelected.has("No Tags") || secondarySelected.has("No Tags");
+
+    // Use existing logic for both groups
     const passPrimary   = matchesGroup(tags, primarySelected,   primaryLogic,   true);
     const passSecondary = matchesGroup(tags, secondarySelected, secondaryLogic, false);
 
-    // Both groups must pass
-    return passPrimary && passSecondary;
+    // Add fallback: include if “No Tags” selected and contact truly has none
+    const matchesNoTags = wantsNoTags && !hasTags;
+
+    return (passPrimary && passSecondary) || matchesNoTags;
   });
 
   // Render table
