@@ -704,6 +704,7 @@ document.getElementById("fetchContacts").onclick = async () => {
   }
 };
 
+
 /* ================= Clear Table Button ================= */
 document.getElementById("clearTable").onclick = () => {
   if (!confirm("Are you sure you want to clear the table?\n\nThis will remove all displayed contacts and tags but will not delete any saved accounts.")) return;
@@ -738,6 +739,10 @@ if (z) {
 }
 
 sourceInfo.textContent = "Source: none loaded";
+
+// 🟢 Always reset active account when Tag Checker loads
+activeAccount = "";
+updateAccountDisplay();
 
 // Save & restore tag-list height
 ["primaryTags", "secondaryTags"].forEach(id => {
