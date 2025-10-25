@@ -302,26 +302,6 @@ function sortedTagListFrom(set) {
   return hasNo ? ["No Tags", ...rest] : rest;
 }
 
-/* ================= Core Button Bindings ================= */
-
-// Manage Accounts button — opens the accounts modal
-document.getElementById("manageAccounts").onclick = () => {
-  const modal = document.getElementById("accountsModal");
-  if (modal) modal.classList.add("show");
-};
-
-// Upload CSV button — triggers file input
-document.getElementById("uploadCsvBtn").onclick = () => {
-  const csvInput = document.getElementById("csvInput");
-  if (csvInput) csvInput.click();
-};
-
-// Top Tags button — opens the top tags modal
-document.getElementById("topTags").onclick = () => {
-  const modal = document.getElementById("topTagsModal");
-  if (modal) modal.classList.add("show");
-};
-
 /* ============== CSV Parsing (client-side, with quoted fields) ============== */
 function parseCSV(text) {
   const rows = [];
