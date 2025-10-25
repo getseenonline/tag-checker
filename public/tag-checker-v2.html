@@ -712,29 +712,27 @@ document.getElementById("clearTable").onclick = () => {
 
 
 /* ================= Initialise + Event Binding ================= */
-document.addEventListener("DOMContentLoaded", () => {
 
-  // Prevent form submission from reloading the page
-  document.querySelector("form")?.addEventListener("submit", e => e.preventDefault());
+// Prevent form submission from reloading the page
+document.querySelector("form")?.addEventListener("submit", e => e.preventDefault());
 
-  // Standard initialisation
-  renderAccountList();
-  updateAccountDisplay();
+// Standard initialisation
+renderAccountList();
+updateAccountDisplay();
 
-  const z = localStorage.getItem("zoom");
-  if (z) {
-    document.body.style.zoom = z;
-    document.getElementById("compactSlider").value = z;
-  }
+const z = localStorage.getItem("zoom");
+if (z) {
+  document.body.style.zoom = z;
+  document.getElementById("compactSlider").value = z;
+}
 
-  sourceInfo.textContent = "Source: none loaded";
+sourceInfo.textContent = "Source: none loaded";
 
-  // Save & restore tag-list height
-  ["primaryTags", "secondaryTags"].forEach(id => {
-    const el = document.getElementById(id);
-    const key = id + "_height";
-    const saved = localStorage.getItem(key);
-    if (saved) el.style.height = saved + "px";
-    el.addEventListener("mouseup", () => localStorage.setItem(key, el.offsetHeight));
-  });
+// Save & restore tag-list height
+["primaryTags", "secondaryTags"].forEach(id => {
+  const el = document.getElementById(id);
+  const key = id + "_height";
+  const saved = localStorage.getItem(key);
+  if (saved) el.style.height = saved + "px";
+  el.addEventListener("mouseup", () => localStorage.setItem(key, el.offsetHeight));
 });
