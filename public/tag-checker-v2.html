@@ -197,6 +197,9 @@
       <button id="selectAllPrimary" type="button">Select All</button>
       <button id="deselectAllPrimary" type="button">Deselect All</button>
     </div>
+    <p class="muted" style="margin-top:6px">
+      Contacts must match both groups: (Primary AND Secondary)
+    </p>
 
      <h3>Secondary Tags</h3>
     <div class="btn-row" style="gap:16px;margin:8px 0 6px">
@@ -483,18 +486,12 @@ function greyWithinGroup(containerId, grey){
 }
 
 function applyNoTagsGreying() {
-  // "No Tags" only appears in the primary list.
-  // Grey out the primary list if it's in AND mode and "No Tags" is selected.
-  const greyPrimary = primaryLogic === "and" && primarySelected.has("No Tags");
+  const grey = primaryLogic === "and" && primarySelected.has("No Tags");
 
-  // Apply greying to the primary list only.
-  greyWithinGroup("primaryTags", greyPrimary);
-
-  // Secondary never contains "No Tags", so keep it fully active.
-  greyWithinGroup("secondaryTags", false);
+  // Grey out both lists when "No Tags" is active in AND mode
+  greyWithinGroup("primaryTags", grey);
+  greyWithinGroup("secondaryTags", grey);
 }
-
-
 
 /* Select / Deselect obeying current search */
 function filteredTagNames(searchInputId){
