@@ -319,31 +319,34 @@ function sortedTagListFrom(set) {
 }
 
 // ================= Tag Matching Helpers =================
-function matchesGroup(contactTags, selectedSet, mode, allowNoTags) {
-  if (!selectedSet || selectedSet.size === 0) return true;
+function matchesGroup(tags, selectedSet, logicMode, allowNoTags) {
+  const selected = [...selectedSet];
+  if (!selected.length) return true;
 
-  const sel = [...selectedSet];
-  const noTagsSelected = allowNoTags && selectedSet.has("No Tags");
-  const other = allowNoTags ? sel.filter(t => t !== "No Tags") : sel;
+  const hasTags = Array.isArray(tags) && tags.length > 0;
 
-  if (noTagsSelected && mode === "and") {
-    // AND with "No Tags" and any other tag is impossible.
-    // Only valid case is selecting just "No Tags" in AND.
-    return other.length === 0 ? (contactTags.length === 0) : false;
+  // Handle "No Tags" selection
+  const wantsNoTags = selected.includes("No Tags");
+  if (wantsNoTags) {
+    // Only match contacts with no tags
+    if (!hasTags) return true;
+
+    // In AND mode, "No Tags" conflicts with having tags → exclude
+    if (logicMode === "and") return false;
+
+    // In OR mode, "No Tags" can match if contact has none
+    // but still allow other tags to match
   }
 
-  if (noTagsSelected && mode === "or") {
-    const otherHit = other.length ? other.some(t => contactTags.includes(t)) : false;
-    return (contactTags.length === 0) || otherHit;
-  }
+  // Remove "No Tags" from matching list before comparing
+  const filtered = selected.filter(t => t !== "No Tags");
 
-  if (mode === "and") {
-    return other.every(t => contactTags.includes(t));
-  } else {
-    return other.some(t => contactTags.includes(t));
-  }
+  if (!filtered.length) return wantsNoTags ? !hasTags : true;
+
+  return logicMode === "and"
+    ? filtered.every(t => tags.includes(t))
+    : filtered.some(t => tags.includes(t));
 }
-
 
 /* ============== CSV Parsing (client-side, with quoted fields) ============== */
 function parseCSV(text) {
