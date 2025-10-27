@@ -6,7 +6,7 @@
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-<title>Tag Checker v2.6.1 - By Get Seen Online</title>
+<title>Tag Checker v2.6 - By Get Seen Online</title>
 <style>
   :root{
     --brand:#0E1A40;
@@ -229,7 +229,7 @@
 
     <div class="bottom-actions">
       <button id="topTags" type="button">Top Tags</button>
-      <footer class="sidebar-footer">Tag Checker v2.6 - By Get Seen Online</footer>
+      <footer class="sidebar-footer">Tag Checker v2.6.1 - By Get Seen Online</footer>
     </div>
   </form>
 </aside>
@@ -319,34 +319,29 @@ function sortedTagListFrom(set) {
 }
 
 // ================= Tag Matching Helpers =================
-function matchesGroup(tags, selectedSet, logicMode, allowNoTags) {
+function matchesGroup(contactTags, selectedSet, logicMode, allowNoTags) {
+  // If nothing is selected, everything matches
+  if (!selectedSet || selectedSet.size === 0) return true;
+
   const selected = [...selectedSet];
-  if (!selected.length) return true;
+  const hasTags = Array.isArray(contactTags) && contactTags.length > 0;
 
-  const hasTags = Array.isArray(tags) && tags.length > 0;
+  // If "No Tags" selected and contact truly has none → match
+  if (selected.includes("No Tags") && !hasTags) return true;
 
-  // Handle "No Tags" selection
-  const wantsNoTags = selected.includes("No Tags");
-  if (wantsNoTags) {
-    // Only match contacts with no tags
-    if (!hasTags) return true;
+  // If "No Tags" selected but contact HAS tags → no match (AND mode)
+  if (selected.includes("No Tags") && hasTags && logicMode === "and") return false;
 
-    // In AND mode, "No Tags" conflicts with having tags → exclude
-    if (logicMode === "and") return false;
-
-    // In OR mode, "No Tags" can match if contact has none
-    // but still allow other tags to match
-  }
-
-  // Remove "No Tags" from matching list before comparing
+  // Remove "No Tags" from list before checking normal tags
   const filtered = selected.filter(t => t !== "No Tags");
+  if (!filtered.length) return false;
 
-  if (!filtered.length) return wantsNoTags ? !hasTags : true;
-
+  // Normal tag logic
   return logicMode === "and"
-    ? filtered.every(t => tags.includes(t))
-    : filtered.some(t => tags.includes(t));
+    ? filtered.every(t => contactTags.includes(t))
+    : filtered.some(t => contactTags.includes(t));
 }
+
 
 /* ============== CSV Parsing (client-side, with quoted fields) ============== */
 function parseCSV(text) {
@@ -402,27 +397,18 @@ function csvToContacts(csvText) {
   return out;
 }
 
-/* ================= Rendering ================= */
 function render() {
   const filtered = rows.filter(r => {
-    const hasTags = r.tags && r.tags.length > 0;
-    const tags = hasTags ? r.tags : [];
+    const tags = r.tags || [];
 
-    // Handle “No Tags” logic separately
-    const wantsNoTags =
-      primarySelected.has("No Tags") || secondarySelected.has("No Tags");
-
-    // Use existing logic for both groups
+    // Check each group separately using its own logic mode
     const passPrimary   = matchesGroup(tags, primarySelected,   primaryLogic,   true);
     const passSecondary = matchesGroup(tags, secondarySelected, secondaryLogic, false);
 
-    // Add fallback: include if “No Tags” selected and contact truly has none
-    const matchesNoTags = wantsNoTags && !hasTags;
-
-    return (passPrimary && passSecondary) || matchesNoTags;
+    // Both groups must pass
+    return passPrimary && passSecondary;
   });
 
-  // Render table
   const tbody = document.querySelector("#results tbody");
   tbody.innerHTML = "";
 
@@ -440,7 +426,6 @@ function render() {
 
   setStatus(`${filtered.length} contact(s) shown.`);
 }
-
 
 function buildTagList(containerId, set, searchId, tagSource) {
   const div = document.getElementById(containerId);
