@@ -157,11 +157,8 @@ button:hover:not(:disabled){filter:brightness(1.08)}
 
   .bottom-actions{margin-top:auto;display:flex;flex-direction:column;gap:16px;padding-top:8px}
 
-/* Unified Button Style */
-.main-btn,
-#manageAccounts,
-#uploadCsvBtn,
-#downloadCsvBtn {
+/* Unified button style */
+.main-btn {
   background: var(--brand);
   color: #fff;
   border: none;
@@ -169,37 +166,34 @@ button:hover:not(:disabled){filter:brightness(1.08)}
   padding: 9px 0;
   cursor: pointer;
   font-weight: 600;
-  width: 140px;           /* ✅ Equal width */
+  width: 140px;        /* ✅ Equal width for all three buttons */
   text-align: center;
   transition: 0.2s;
 }
 
-/* Clean hover (no shadow) */
-.main-btn:hover,
-#manageAccounts:hover,
-#uploadCsvBtn:hover,
-#downloadCsvBtn:hover {
+/* Hover interaction: clean + subtle */
+.main-btn:hover:not(:disabled) {
   filter: brightness(1.12);
   transform: translateY(-1px);
 }
 
-/* Remove old/built-in shadows cleanly */
+/* Ensure buttons have no shadows anymore */
 #manageAccounts,
 #uploadCsvBtn,
 #downloadCsvBtn {
   box-shadow: none !important;
 }
 
-/* Clean centered tooltip */
+/* Tooltip wrapper */
 .tooltip {
   position: relative;
   display: inline-block;
 }
 
+/* Tooltip text */
 .tooltip .tooltiptext {
   visibility: hidden;
   opacity: 0;
-  width: max-content;
   background: #111;
   color: #fff;
   font-size: 11px;
@@ -214,10 +208,12 @@ button:hover:not(:disabled){filter:brightness(1.08)}
   pointer-events: none;
 }
 
+/* Show tooltip on hover */
 .tooltip:hover .tooltiptext {
   visibility: visible;
   opacity: 1;
 }
+
 </style>
 </head>
 <body>
@@ -238,18 +234,18 @@ button:hover:not(:disabled){filter:brightness(1.08)}
       <div class="btn-row">
         <button id="uploadCsvBtn" type="button" class="main-btn">Upload CSV</button>
         <button id="manageAccounts" type="button" class="main-btn">Manage Accounts</button>
-      </div>
 
-      <div class="download-row">
-        <button id="downloadCsvBtn" type="button" class="main-btn tooltip">
-          Download CSV
+        <div class="tooltip">
+          <button id="downloadCsvBtn" type="button" class="main-btn">Download CSV</button>
           <span class="tooltiptext">Download the currently filtered table as a CSV</span>
-        </button>
+        </div>
       </div>
 
-      <div class="muted small" style="margin-bottom:12px;"> 
-        Source: none loaded 
+
+      <div class="muted small" id="sourceInfo" style="margin-bottom:14px;">
+        Source: none loaded
       </div>
+
 
 
       <div class="muted" id="sourceInfo" style="margin-top:6px"></div>
