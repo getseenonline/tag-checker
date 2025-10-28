@@ -39,11 +39,24 @@
   section{flex:1;padding:16px;overflow:auto;display:flex;flex-direction:column}
 
   button{
-    background:var(--brand);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:600
-  }
-  button:disabled{opacity:.45;cursor:not-allowed}
-  button:hover:not(:disabled){filter:brightness(1.08)}
-  #manageAccounts,#uploadCsvBtn{box-shadow:0 6px 16px rgba(0,0,0,.22)}
+  background:var(--brand);
+  color:#fff;
+  border:0;
+  border-radius:8px;
+  padding:8px 14px;
+  cursor:pointer;
+  font-weight:600;
+}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:hover:not(:disabled){filter:brightness(1.08)}
+
+/* Match button shadows for all main sidebar buttons */
+#manageAccounts,
+#uploadCsvBtn,
+#downloadCsvBtn {
+  box-shadow:0 6px 16px rgba(0,0,0,.22);
+}
+
   .btn-row{display:flex;gap:10px;flex-wrap:wrap}
 
   h3{margin:16px 0 8px}
@@ -150,6 +163,54 @@
   .muted{opacity:.7}
 
   .bottom-actions{margin-top:auto;display:flex;flex-direction:column;gap:16px;padding-top:8px}
+
+.main-btn {
+    background: var(--brand);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(0,0,0,.25);
+    transition: 0.15s;
+    display: inline-block;
+  }
+
+  .main-btn:hover {
+    filter: brightness(1.07);
+  }
+
+  .tooltip {
+    position: relative;
+    display: inline-block;
+    margin-top: 8px;
+  }
+
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    width: 220px;
+    background-color: #222;
+    color: #fff;
+    font-size: 12px;
+    text-align: left;
+    padding: 8px;
+    border-radius: 6px;
+    position: absolute;
+    z-index: 100;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 8px;
+    opacity: 0;
+    transition: opacity 0.25s;
+    pointer-events: none;
+  }
+
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+  }
 </style>
 </head>
 <body>
@@ -168,9 +229,16 @@
       <input type="password" style="display:none" autocomplete="new-password">
 
       <div class="btn-row">
-        <button id="manageAccounts" type="button">Manage Accounts</button>
-        <button id="uploadCsvBtn" type="button">Upload CSV</button>
+        <button id="uploadCsvBtn" type="button" class="main-btn">Upload CSV</button>
+        <button id="manageAccounts" type="button" class="main-btn">Manage Accounts</button>
       </div>
+
+      <button id="downloadCsvBtn" type="button" class="main-btn tooltip">
+        Download CSV
+        <span class="tooltiptext">Download the currently filtered table as a CSV</span>
+      </button>
+
+
 
       <div class="muted" id="sourceInfo" style="margin-top:6px"></div>
       <input type="file" id="csvInput" accept=".csv" style="display:none">
@@ -773,6 +841,36 @@ document.getElementById("clearTable").onclick = () => {
   activeAccount = "";
   updateAccountDisplay();
   setStatus("Table cleared.");
+};
+
+/* ================= Download Filtered CSV ================= */
+document.getElementById("downloadCsvBtn").onclick = () => {
+  const visibleRows = Array.from(document.querySelectorAll("#results tbody tr"));
+  if (!visibleRows.length) {
+    alert("No contacts to download.");
+    return;
+  }
+
+  const rowsOut = [
+    ["First Name", "Last Name", "Email", "Tags"].join(",")
+  ];
+
+  visibleRows.forEach(tr => {
+    const tds = tr.querySelectorAll("td");
+    const first = tds[0].innerText.trim();
+    const last  = tds[1].innerText.trim();
+    const email = tds[2].innerText.trim();
+    const tags  = tds[3].innerText.replace(/\s+/g, " ").trim();
+    rowsOut.push([first, last, email, tags].join(","));
+  });
+
+  const blob = new Blob([rowsOut.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `tag-checker-results-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 };
 
 
