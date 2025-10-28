@@ -320,33 +320,28 @@ function sortedTagListFrom(set) {
 
 // ================= Tag Matching Helpers =================
 function matchesGroup(contactTags, selectedSet, logicMode) {
-  // If nothing is selected, everything matches
   if (!selectedSet || selectedSet.size === 0) return true;
 
-  const selected = [...selectedSet];
+  const selected   = [...selectedSet];
+  const wantsNo    = selected.includes("No Tags");
+  const hasNoTags  = !Array.isArray(contactTags) || contactTags.length === 0;
 
-  const wantsNoTags = selected.includes("No Tags");
-  const hasNoTags = contactTags.length === 0;
-
-  // If "No Tags" is selected
-  if (wantsNoTags) {
+  if (wantsNo) {
     const others = selected.filter(t => t !== "No Tags");
-
     if (logicMode === "and") {
-      // Only match if the contact has no tags AND no other tags are selected
+      // Only pass if contact truly has no tags AND nothing else is selected
       return hasNoTags && others.length === 0;
     } else {
-      // OR mode → match if contact has no tags OR matches any other selected tag
+      // OR: match no-tag contacts OR tag matches
       return hasNoTags || others.some(t => contactTags.includes(t));
     }
   }
 
-  // Normal tag logic (no "No Tags" involved)
+  // Normal logic when "No Tags" not involved
   return logicMode === "and"
     ? selected.every(t => contactTags.includes(t))
     : selected.some(t => contactTags.includes(t));
 }
-
 
 
 /* ============== CSV Parsing (client-side, with quoted fields) ============== */
@@ -408,9 +403,8 @@ function render() {
     const tags = r.tags || [];
 
     // Check each group separately using its own logic mode
-    const passPrimary   = matchesGroup(tags, primarySelected,   primaryLogic);
-    const passSecondary = matchesGroup(tags, secondarySelected, secondaryLogic);
-
+    const passPrimary   = matchesGroup(r.tags, primarySelected,   primaryLogic);
+    const passSecondary = matchesGroup(r.tags, secondarySelected, secondaryLogic);
 
     // Both groups must pass
     return passPrimary && passSecondary;
@@ -464,12 +458,17 @@ function buildTagList(containerId, set, searchId, tagSource) {
 }
 
 function buildBothTagLists() {
-  // Primary list: show all tags including "No Tags"
-  buildTagList("primaryTags", primarySelected, "primarySearchBox");
+  // Build list of real tags only
+  const base = sortedTagListFrom(allTags);
 
-  // Secondary list: exclude "No Tags"
-  const tagsWithoutNoTags = allTags.filter(t => t !== "No Tags");
-  buildTagList("secondaryTags", secondarySelected, "secondarySearchBox", tagsWithoutNoTags);
+  // Primary list gets a *synthetic* "No Tags" entry at the top
+  const primarySource = ["No Tags", ...base];
+
+  // Secondary list does NOT include "No Tags"
+  const secondarySource = base;
+
+  buildTagList("primaryTags",   primarySelected,   "primarySearchBox",   primarySource);
+  buildTagList("secondaryTags", secondarySelected, "secondarySearchBox", secondarySource);
 
   applyNoTagsGreying();
 }
@@ -488,9 +487,7 @@ function greyWithinGroup(containerId, grey){
 }
 
 function applyNoTagsGreying() {
-  const grey = primaryLogic === "and" && primarySelected.has("No Tags");
-
-  // Grey out both lists when "No Tags" is active in AND mode
+  const grey = (primaryLogic === "and") && primarySelected.has("No Tags");
   greyWithinGroup("primaryTags", grey);
   greyWithinGroup("secondaryTags", grey);
 }
