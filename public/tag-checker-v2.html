@@ -229,7 +229,7 @@
 
     <div class="bottom-actions">
       <button id="topTags" type="button">Top Tags</button>
-      <footer class="sidebar-footer">Tag Checker v2.6.1 - By Get Seen Online</footer>
+      <footer class="sidebar-footer">Tag Checker v2.6.2 - By Get Seen Online</footer>
     </div>
   </form>
 </aside>
@@ -319,28 +319,34 @@ function sortedTagListFrom(set) {
 }
 
 // ================= Tag Matching Helpers =================
-function matchesGroup(contactTags, selectedSet, logicMode, allowNoTags) {
+function matchesGroup(contactTags, selectedSet, logicMode) {
   // If nothing is selected, everything matches
   if (!selectedSet || selectedSet.size === 0) return true;
 
   const selected = [...selectedSet];
-  const hasTags = Array.isArray(contactTags) && contactTags.length > 0;
 
-  // If "No Tags" selected and contact truly has none → match
-  if (selected.includes("No Tags") && !hasTags) return true;
+  const wantsNoTags = selected.includes("No Tags");
+  const hasNoTags = contactTags.length === 0;
 
-  // If "No Tags" selected but contact HAS tags → no match (AND mode)
-  if (selected.includes("No Tags") && hasTags && logicMode === "and") return false;
+  // If "No Tags" is selected
+  if (wantsNoTags) {
+    const others = selected.filter(t => t !== "No Tags");
 
-  // Remove "No Tags" from list before checking normal tags
-  const filtered = selected.filter(t => t !== "No Tags");
-  if (!filtered.length) return false;
+    if (logicMode === "and") {
+      // Only match if the contact has no tags AND no other tags are selected
+      return hasNoTags && others.length === 0;
+    } else {
+      // OR mode → match if contact has no tags OR matches any other selected tag
+      return hasNoTags || others.some(t => contactTags.includes(t));
+    }
+  }
 
-  // Normal tag logic
+  // Normal tag logic (no "No Tags" involved)
   return logicMode === "and"
-    ? filtered.every(t => contactTags.includes(t))
-    : filtered.some(t => contactTags.includes(t));
+    ? selected.every(t => contactTags.includes(t))
+    : selected.some(t => contactTags.includes(t));
 }
+
 
 
 /* ============== CSV Parsing (client-side, with quoted fields) ============== */
@@ -402,8 +408,9 @@ function render() {
     const tags = r.tags || [];
 
     // Check each group separately using its own logic mode
-    const passPrimary   = matchesGroup(tags, primarySelected,   primaryLogic,   true);
-    const passSecondary = matchesGroup(tags, secondarySelected, secondaryLogic, false);
+    const passPrimary   = matchesGroup(tags, primarySelected,   primaryLogic);
+    const passSecondary = matchesGroup(tags, secondarySelected, secondaryLogic);
+
 
     // Both groups must pass
     return passPrimary && passSecondary;
@@ -662,7 +669,7 @@ document.getElementById("csvInput").addEventListener("change", async (e)=>{
       email: c.email || "",
       tags : (Array.isArray(c.tags)?c.tags:splitTags(c.tags||"")).filter(Boolean)
     }));
-    rows.forEach(r=>{ if(!r.tags.length) r.tags=["No Tags"]; });
+    rows.forEach(r => { if (!r.tags || !r.tags.length) r.tags = []; });
     const tagSet = new Set();
     rows.forEach(r=>r.tags.forEach(t=>tagSet.add(t)));
     allTags = Array.from(tagSet);
@@ -727,8 +734,7 @@ document.getElementById("fetchContacts").onclick = async () => {
       email: c.email || "",
       tags: (Array.isArray(c.tags) ? c.tags : splitTags(c.tags)).filter(Boolean)
     }));
-
-    rows.forEach(r => { if (!r.tags.length) r.tags = ["No Tags"]; });
+    rows.forEach(r => { if (!r.tags || !r.tags.length) r.tags = []; });
 
     const tagSet = new Set();
     rows.forEach(r => r.tags.forEach(t => tagSet.add(t)));
