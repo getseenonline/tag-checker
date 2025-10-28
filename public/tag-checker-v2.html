@@ -50,7 +50,11 @@
 button:disabled{opacity:.45;cursor:not-allowed}
 button:hover:not(:disabled){filter:brightness(1.08)}
 
-  .btn-row{display:flex;gap:10px;flex-wrap:wrap}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap; margin-bottom: 8px}
+
+'sourceInfo {
+   margin-top: 6px;
+}
 
   h3{margin:16px 0 8px}
   input[type=text],input[type=password]{width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;background:#fff}
@@ -232,23 +236,25 @@ button:hover:not(:disabled){filter:brightness(1.08)}
       <input type="password" style="display:none" autocomplete="new-password">
 
       <div class="btn-row">
-        <button id="uploadCsvBtn" type="button" class="main-btn">Upload CSV</button>
         <button id="manageAccounts" type="button" class="main-btn">Manage Accounts</button>
+      </div>
 
+      <div class="btn-row">
+        <button id="manageAccounts" type="button" class="main-btn">Manage Accounts</button>
+      </div>
+
+      <div class="btn-row">
+        <button id="uploadCsvBtn" type="button" class="main-btn">Upload CSV</button>
         <div class="tooltip">
           <button id="downloadCsvBtn" type="button" class="main-btn">Download CSV</button>
           <span class="tooltiptext">Download the currently filtered table as a CSV</span>
         </div>
       </div>
 
-
-      <div class="muted small" id="sourceInfo" style="margin-bottom:14px;">
-        Source: none loaded
+      <div id="sourceInfo" class="muted small" style="margin-top:6px;margin-bottom:16px;">
+        Data Source: Not loaded yet
       </div>
 
-
-
-      <div class="muted" id="sourceInfo" style="margin-top:6px"></div>
       <input type="file" id="csvInput" accept=".csv" style="display:none">
 
 
