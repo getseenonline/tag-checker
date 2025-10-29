@@ -306,10 +306,12 @@ button:hover:not(:disabled){filter:brightness(1.08)}
     <h3>Display size</h3>
     <input id="compactSlider" class="slider" type="range" min="0.85" max="1.15" step="0.01" value="1">
 
-    <div class="bottom-actions">
-      <button id="topTags" type="button">Top Tags</button>
-      <footer class="sidebar-footer">Tag Checker v2.6.2 - By Get Seen Online</footer>
-    </div>
+  <div class="bottom-actions">
+    <button id="topTags" type="button">Top Tags</button>
+    <button id="tagAnalysisBtn" type="button">Tag Analysis</button>
+    <footer class="sidebar-footer">Tag Checker v2.6.2 - By Get Seen Online</footer>
+  </div>
+
   </form>
 </aside>
 
@@ -342,6 +344,18 @@ button:hover:not(:disabled){filter:brightness(1.08)}
     </div>
   </div>
 </div>
+
+<!-- Tag Analysis Modal -->
+<div class="modal" id="tagAnalysisModal">
+  <div class="modal-content">
+    <h3>Selected Tag Analysis</h3>
+    <div id="tagAnalysisList" style="margin-top:12px; font-size:14px; line-height:1.5;"></div>
+    <div class="modal-actions" style="margin-top:18px">
+      <button id="closeTagAnalysis" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- Manage Accounts Modal -->
 <div class="modal" id="accountsModal">
@@ -398,29 +412,32 @@ function sortedTagListFrom(set) {
 }
 
 // ================= Tag Matching Helpers =================
-function matchesGroup(contactTags, selectedSet, logicMode) {
-  if (!selectedSet || selectedSet.size === 0) return true;
+function matchesGroup(contactTags, selectedSet, logicMode, isPrimaryGroup) {
+  const selected = [...selectedSet];
+  const hasTags = Array.isArray(contactTags) && contactTags.length > 0;
 
-  const selected   = [...selectedSet];
-  const wantsNo    = selected.includes("No Tags");
-  const hasNoTags  = !Array.isArray(contactTags) || contactTags.length === 0;
+  // If nothing selected, allow all
+  if (selected.length === 0) return true;
 
-  if (wantsNo) {
-    const others = selected.filter(t => t !== "No Tags");
-    if (logicMode === "and") {
-      // Only pass if contact truly has no tags AND nothing else is selected
-      return hasNoTags && others.length === 0;
-    } else {
-      // OR: match no-tag contacts OR tag matches
-      return hasNoTags || others.some(t => contactTags.includes(t));
-    }
+  // Special case: Primary AND + No Tags selected
+  if (isPrimaryGroup && logicMode === "and" && selected.includes("No Tags")) {
+    return !hasTags; // true only if contact has no tags
   }
 
-  // Normal logic when "No Tags" not involved
+  // Remove No Tags before evaluating normal logic
+  const filtered = selected.filter(t => t !== "No Tags");
+
+  // If we removed everything and only No Tags was selected:
+  if (filtered.length === 0) {
+    return !hasTags;
+  }
+
+  // Standard AND/OR logic
   return logicMode === "and"
-    ? selected.every(t => contactTags.includes(t))
-    : selected.some(t => contactTags.includes(t));
+    ? filtered.every(t => contactTags.includes(t))
+    : filtered.some(t => contactTags.includes(t));
 }
+
 
 
 /* ============== CSV Parsing (client-side, with quoted fields) ============== */
@@ -854,7 +871,47 @@ document.getElementById("clearTable").onclick = () => {
   setStatus("Table cleared.");
 };
 
-/* ================= Download Filtered CSV ================= */
+/* ================= Tag Analysis (current filtered vs total) ================= */
+document.getElementById("tagAnalysisBtn").onclick = () => {
+  // Get currently visible rows from UI
+  const visibleRows = Array.from(document.querySelectorAll("#results tbody tr"));
+  if (!visibleRows.length) {
+    alert("No contacts currently visible.");
+    return;
+  }
+
+  // Build filtered dataset
+  const filteredEmails = new Set(visibleRows.map(r => r.children[2].innerText.trim()));
+
+  const totalCount = {};
+  const filteredCount = {};
+
+  rows.forEach(r => {
+    const tags = r.tags.length ? r.tags : ["No Tags"];
+    tags.forEach(t => {
+      totalCount[t] = (totalCount[t] || 0) + 1;
+      if (filteredEmails.has(r.email)) {
+        filteredCount[t] = (filteredCount[t] || 0) + 1;
+      }
+    });
+  });
+
+  const selectedTags = new Set([...primarySelected, ...secondarySelected]);
+
+  const output = [...selectedTags]
+    .map(t => `${t} (${filteredCount[t] || 0} / ${totalCount[t] || 0})`)
+    .join("<br>");
+
+  document.getElementById("tagAnalysisList").innerHTML =
+    output || "No tags currently selected.";
+
+  document.getElementById("tagAnalysisModal").classList.add("show");
+};
+
+document.getElementById("closeTagAnalysis").onclick = () =>
+  document.getElementById("tagAnalysisModal").classList.remove("show");
+
+/* ================= Download Filtered CSV (with metadata) ================= */
 document.getElementById("downloadCsvBtn").onclick = () => {
   const visibleRows = Array.from(document.querySelectorAll("#results tbody tr"));
   if (!visibleRows.length) {
@@ -862,27 +919,62 @@ document.getElementById("downloadCsvBtn").onclick = () => {
     return;
   }
 
+  // Determine filename parts
+  const acctName = activeAccount && activeAccount.trim()
+    ? activeAccount.replace(/[^a-z0-9\s_-]/gi, "").replace(/\s+/g, "-")
+    : "tag-checker-results";
+
+  const primaryModeText = (primaryLogic === "and" ? "ALL" : "ANY");
+  const secondaryModeText = (secondaryLogic === "and" ? "ALL" : "ANY");
+
+  const dateStr = new Date().toISOString().slice(0, 10);
+
+  const filename = `${acctName}__primary-${primaryModeText}__secondary-${secondaryModeText}__${dateStr}.csv`;
+
+  // Gather selected tags for metadata
+  const primaryTagsList = [...primarySelected].join(", ") || "None selected";
+  const secondaryTagsList = [...secondarySelected].join(", ") || "None selected";
+
+  const metadataLines = [
+    `# Exported from: ${activeAccount || "No account selected"}`,
+    `# Date: ${dateStr}`,
+    `# Primary tags (${primaryModeText}): ${primaryTagsList}`,
+    `# Secondary tags (${secondaryModeText}): ${secondaryTagsList}`,
+    `# ---------------------------------------------------------------`
+  ];
+
+  // Table header row
   const rowsOut = [
+    ...metadataLines,
     ["First Name", "Last Name", "Email", "Tags"].join(",")
   ];
 
+  // Add data rows
   visibleRows.forEach(tr => {
     const tds = tr.querySelectorAll("td");
+
     const first = tds[0].innerText.trim();
     const last  = tds[1].innerText.trim();
     const email = tds[2].innerText.trim();
-    const tags  = tds[3].innerText.replace(/\s+/g, " ").trim();
-    rowsOut.push([first, last, email, tags].join(","));
+
+    // Get clean tag list
+    const tagSpans = tds[3].querySelectorAll(".tag");
+    const tags = tagSpans.length
+      ? Array.from(tagSpans).map(s => s.innerText.trim()).join(", ")
+      : "No Tags";
+
+    rowsOut.push([first, last, email, `"${tags}"`].join(","));
   });
 
   const blob = new Blob([rowsOut.join("\n")], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `tag-checker-results-${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
 };
+
 
 
 /* ================= Initialise + Event Binding ================= */
