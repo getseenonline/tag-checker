@@ -241,9 +241,15 @@ button:hover:not(:disabled){filter:brightness(1.08)}
 
       <div class="btn-row">
         <button id="uploadCsvBtn" type="button" class="main-btn">Upload CSV</button>
+
         <div class="tooltip">
           <button id="downloadCsvBtn" type="button" class="main-btn">Download CSV</button>
           <span class="tooltiptext">Download the currently filtered table as a CSV</span>
+        </div>
+
+        <div class="tooltip">
+          <button id="tagAnalysisBtn" type="button" class="main-btn">Tag Analysis</button>
+          <span class="tooltiptext">Compare filtered tag counts vs totals</span>
         </div>
       </div>
       
@@ -873,16 +879,13 @@ document.getElementById("clearTable").onclick = () => {
 
 /* ================= Tag Analysis (current filtered vs total) ================= */
 document.getElementById("tagAnalysisBtn").onclick = () => {
-  // Get currently visible rows from UI
   const visibleRows = Array.from(document.querySelectorAll("#results tbody tr"));
   if (!visibleRows.length) {
     alert("No contacts currently visible.");
     return;
   }
 
-  // Build filtered dataset
   const filteredEmails = new Set(visibleRows.map(r => r.children[2].innerText.trim()));
-
   const totalCount = {};
   const filteredCount = {};
 
@@ -890,14 +893,11 @@ document.getElementById("tagAnalysisBtn").onclick = () => {
     const tags = r.tags.length ? r.tags : ["No Tags"];
     tags.forEach(t => {
       totalCount[t] = (totalCount[t] || 0) + 1;
-      if (filteredEmails.has(r.email)) {
-        filteredCount[t] = (filteredCount[t] || 0) + 1;
-      }
+      if (filteredEmails.has(r.email)) filteredCount[t] = (filteredCount[t] || 0) + 1;
     });
   });
 
   const selectedTags = new Set([...primarySelected, ...secondarySelected]);
-
   const output = [...selectedTags]
     .map(t => `${t} (${filteredCount[t] || 0} / ${totalCount[t] || 0})`)
     .join("<br>");
