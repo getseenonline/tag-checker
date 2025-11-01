@@ -235,10 +235,17 @@ button:hover:not(:disabled){filter:brightness(1.08)}
       <input type="text" style="display:none" autocomplete="username">
       <input type="password" style="display:none" autocomplete="new-password">
 
+      <!-- Row 1 -->
       <div class="btn-row">
         <button id="manageAccounts" type="button" class="main-btn">Manage Accounts</button>
+
+        <div class="tooltip">
+          <button id="tagAnalysisBtn" type="button" class="main-btn">Tag Analysis</button>
+          <span class="tooltiptext">Compare filtered tag counts vs totals</span>
+        </div>
       </div>
 
+      <!-- Row 2 -->
       <div class="btn-row">
         <button id="uploadCsvBtn" type="button" class="main-btn">Upload CSV</button>
 
@@ -246,18 +253,14 @@ button:hover:not(:disabled){filter:brightness(1.08)}
           <button id="downloadCsvBtn" type="button" class="main-btn">Download CSV</button>
           <span class="tooltiptext">Download the currently filtered table as a CSV</span>
         </div>
-
-        <div class="tooltip">
-          <button id="tagAnalysisBtn" type="button" class="main-btn">Tag Analysis</button>
-          <span class="tooltiptext">Compare filtered tag counts vs totals</span>
-        </div>
-      </div>
-      
-      <div id="sourceInfo" class="muted small" style="margin-top:6px;margin-bottom:16px;">
-        Data Source: Not loaded yet
       </div>
 
+      <!-- Source line + hidden file input stay just below the buttons -->
+      <div id="sourceInfo" class="muted small" style="margin-bottom:16px; margin-top:4px;">
+        Source: none loaded
+      </div>
       <input type="file" id="csvInput" accept=".csv" style="display:none">
+
 
 
 
@@ -314,7 +317,6 @@ button:hover:not(:disabled){filter:brightness(1.08)}
 
   <div class="bottom-actions">
     <button id="topTags" type="button">Top Tags</button>
-    <button id="tagAnalysisBtn" type="button">Tag Analysis</button>
     <footer class="sidebar-footer">Tag Checker v2.6.2 - By Get Seen Online</footer>
   </div>
 
